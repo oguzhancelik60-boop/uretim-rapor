@@ -2,192 +2,367 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4F46E5">
-    <meta name="description" content="Üretim Rapor Sistemi - Fabrika üretim takip uygulaması">
     <title>Üretim Rapor Sistemi</title>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiw5xyZXRpbSBSYXBvciBTaXN0ZW1pIiwic2hvcnRfbmFtZSI6IsOccmV0aW0gUmFwb3IiLCJkZXNjcmlwdGlvbiI6IkZhYnJpa2Egw7xyZXRpbSBzw7xyZcOnbGVyaSB0YWtpcCB2ZSByYXBvcmxhbWEgc2lzdGVtaSIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjNEY0NkU1Iiwib3JpZW50YXRpb24iOiJwb3J0cmFpdC1wcmltYXJ5IiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0Nzdmcgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnJTNFJTNDZGVmcyUzRSUzQ2xpbmVhckdyYWRpZW50IGlkPSdnJyB4MT0nMCUyNScgeTE9JzAlMjUnIHgyPScxMDAlMjUnIHkyPScxMDAlMjUnJTNFJTNDc3RvcCBvZmZzZXQ9JzAlMjUnIHN0eWxlPSdzdG9wLWNvbG9yOiU2NjdlZWE7c3RvcC1vcGFjaXR5OjEnLyUzRSUzQ3N0b3Agb2Zmc2V0PScxMDAlMjUnIHN0eWxlPSdzdG9wLWNvbG9yOiU3NjRiYTI7c3RvcC1vcGFjaXR5OjEnLyUzRSUzQy9saW5lYXJHcmFkaWVudCUzRSUzQy9kZWZzJTNFJTNDcmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0ndXJsKCUyM2cpJy8lM0UlM0N0ZXh0IHg9JzUwJyB5PSc2MCcgZm9udC1mYW1pbHk9J0FyaWFsJyBmb250LXNpemU9JzUwJyBmaWxsPSd3aGl0ZScgdGV4dC1hbmNob3I9J21pZGRsZSclM0Xwn4+tJTNDL3RleHQlM0UlM0Mvc3ZnJTNFIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn0seyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHdpZHRoPSc1MTInIGhlaWdodD0nNTEyJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyUzRSUzQ2RlZnMlM0UlM0NsaW5lYXJHcmFkaWVudCBpZD0nZycgeDE9JzAlMjUnIHkxPScwJTI1JyB4Mj0nMTAwJTI1JyB5Mj0nMTAwJTI1JyUzRSUzQ3N0b3Agb2Zmc2V0PScwJTI1JyBzdHlsZT0nc3RvcC1jb2xvcjolNjY3ZWVhO3N0b3Atb3BhY2l0eToxJy8lM0UlM0NzdG9wIG9mZnNldD0nMTAwJTI1JyBzdHlsZT0nc3RvcC1jb2xvcjolNzY0YmEyO3N0b3Atb3BhY2l0eToxJy8lM0UlM0MvbGluZWFyR3JhZGllbnQlM0UlM0MvZGVmcyUzRSUzQ3JlY3Qgd2lkdGg9JzEwMCcgaGVpZ2h0PScxMDAnIGZpbGw9J3VybCglMjNnKScvJTNFJTNDdGV4dCB4PSc1MCcgeT0nNjAnIGZvbnQtZmFtaWx5PSdBcmlhbCcgZm9udC1zaXplPSc1MCcgZmlsbD0nd2hpdGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnJTNF8J+PrSUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIiwicHVycG9zZSI6ImFueSBtYXNrYWJsZSJ9XX0=">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg width='192' height='192' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23g)'/%3E%3Ctext x='50' y='60' font-family='Arial' font-size='50' fill='white' text-anchor='middle'%3E🏭%3C/text%3E%3C/svg%3E">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E🏭%3C/text%3E%3C/svg%3E">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Üretim Rapor">
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
-    </style>
 </head>
-<body>
-    <div id="root"></div>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<body class="bg-gray-100">
+    <div id="app"></div>
     
     <script>
-        'use strict';
-        const e = React.createElement;
-        const { useState, useEffect } = React;
+    const USERS = {
+        'yonetici': { password: 'admin123', role: 'Yönetici', name: 'Yönetici', isAdmin: true },
+        'ali': { password: 'ali123', role: 'Operatör', name: 'Ali', isAdmin: false }
+    };
 
-        // TRANSLATIONS
-        const T = {
-          tr: { production_report_system: 'Üretim Rapor Sistemi', login_to_continue: 'Devam etmek için giriş yapın', username: 'Kullanıcı Adı', password: 'Şifre', enter_username: 'Kullanıcı adınızı girin', enter_password: 'Şifrenizi girin', login_button: 'Giriş Yap', logout_button: 'Çıkış', demo_users: 'Demo Kullanıcılar', full_access: 'Tüm erişim', user_not_found: 'Kullanıcı bulunamadı!', wrong_password: 'Şifre yanlış!', welcome: 'Hoş geldiniz', manager: 'Yönetici', operator: 'Operatör', report_date: 'Rapor Tarihi', select_date: 'Tarih Seç', filter_reports: 'Raporları Filtrele', start_date: 'Başlangıç Tarihi', end_date: 'Bitiş Tarihi', filter: 'Filtrele', show_all: 'Tümünü Göster', today: 'Bugün', export_excel: 'Excel\'e Aktar', export_this_report: 'Bu Raporu Aktar', export_filtered: 'Filtrelenenleri Aktar', export_all: 'Tümünü Aktar', share_whatsapp: 'WhatsApp\'ta Paylaş', wood_acceptance: 'Ağaç Kabul', veneer_cutting: 'Papel Soyma', drying: 'Kurutma', veneer_adding: 'Papel Ekleme', gluing: 'Tutkallama', warehouse: 'Depo', coming_soon: 'Yakında Aktif Olacak', no_permission: 'Yetkiniz Yok', open: 'Giriş Yap', back: 'Geri', drying_machine_report: 'Kurutma Makinesi Üretim Raporu', data_entry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift_selection: 'Vardiya Seçimi', morning_shift: 'Sabah Vardiyası', evening_shift: 'Akşam Vardiyası', machine: 'Makine', width_mm: 'En (mm)', length_mm: 'Boy (mm)', thickness_mm: 'Kalınlık (mm)', poperechny: 'Поперечный', prodolny: 'Продольный', quantity: 'Adet', volume: 'Hacim', total_poperechny: 'Поперечный Toplam', total_prodolny: 'Продольный Toplam', grand_total: 'Genel Toplam Hacim', total_quantity: 'Toplam Adet', save_report: 'Raporu Kaydet', report_saved: 'Rapor başarıyla kaydedildi!', no_reports: 'Henüz kayıtlı rapor bulunmuyor.', date: 'Tarih', shift: 'Vardiya', user: 'Kullanıcı', morning: 'Sabah', evening: 'Akşam', danger_zone: 'Tehlikeli Bölge', delete_warning: 'Bu işlem tüm kayıtlı raporları kalıcı olarak silecektir.', delete_all_reports: 'Tüm Raporları Sıfırla', confirm_delete: 'Tüm raporlar silinecek. Emin misiniz?', statistics: 'İstatistikler', total_saved_reports: 'Toplam Kayıtlı Rapor', only_admin: 'Sadece' },
-          ru: { production_report_system: 'Система Производственных Отчётов', login_to_continue: 'Войдите для продолжения', username: 'Имя пользователя', password: 'Пароль', enter_username: 'Введите имя пользователя', enter_password: 'Введите пароль', login_button: 'Войти', logout_button: 'Выход', demo_users: 'Демо пользователи', full_access: 'Полный доступ', user_not_found: 'Пользователь не найден!', wrong_password: 'Неверный пароль!', welcome: 'Добро пожаловать', manager: 'Менеджер', operator: 'Оператор', report_date: 'Дата Отчёта', select_date: 'Выбрать Дату', filter_reports: 'Фильтр Отчётов', start_date: 'Начальная Дата', end_date: 'Конечная Дата', filter: 'Фильтр', show_all: 'Показать Все', today: 'Сегодня', export_excel: 'Экспорт в Excel', export_this_report: 'Экспорт Этого Отчёта', export_filtered: 'Экспорт Фильтрованных', export_all: 'Экспорт Всех', share_whatsapp: 'Поделиться в WhatsApp', wood_acceptance: 'Приём Дерева', veneer_cutting: 'Резка Шпона', drying: 'Сушка', veneer_adding: 'Добавление Шпона', gluing: 'Склеивание', warehouse: 'Склад', coming_soon: 'Скоро будет активен', no_permission: 'Нет доступа', open: 'Открыть', back: 'Назад', drying_machine_report: 'Отчёт о Производстве Сушильных Машин', data_entry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift_selection: 'Выбор Смены', morning_shift: 'Утренняя Смена', evening_shift: 'Вечерняя Смена', machine: 'Машина', width_mm: 'Ширина (мм)', length_mm: 'Длина (мм)', thickness_mm: 'Толщина (мм)', poperechny: 'Поперечный', prodolny: 'Продольный', quantity: 'Количество', volume: 'Объём', total_poperechny: 'Поперечный Итого', total_prodolny: 'Продольный Итого', grand_total: 'Общий Объём', total_quantity: 'Всего Количество', save_report: 'Сохранить Отчёт', report_saved: 'Отчёт успешно сохранён!', no_reports: 'Пока нет сохранённых отчётов.', date: 'Дата', shift: 'Смена', user: 'Пользователь', morning: 'Утренняя', evening: 'Вечерняя', danger_zone: 'Опасная Зона', delete_warning: 'Это действие безвозвратно удалит все сохранённые отчёты.', delete_all_reports: 'Очистить Все Отчёты', confirm_delete: 'Все отчёты будут удалены. Вы уверены?', statistics: 'Статистика', total_saved_reports: 'Всего Сохранённых Отчётов', only_admin: 'Только' },
-          kk: { production_report_system: 'Өндіріс есебі жүйесі', login_to_continue: 'Жалғастыру үшін кіріңіз', username: 'Пайдаланушы аты', password: 'Құпия сөз', enter_username: 'Пайдаланушы атын енгізіңіз', enter_password: 'Құпия сөзді енгізіңіз', login_button: 'Кіру', logout_button: 'Шығу', demo_users: 'Демо пайдаланушылар', full_access: 'Толық қол жеткізу', user_not_found: 'Пайдаланушы табылмады!', wrong_password: 'Құпия сөз қате!', welcome: 'Қош келдіңіз', manager: 'Менеджер', operator: 'Оператор', report_date: 'Есеп Күні', select_date: 'Күн Таңдау', filter_reports: 'Есептерді Сүзу', start_date: 'Басталу Күні', end_date: 'Аяқталу Күні', filter: 'Сүзу', show_all: 'Барлығын Көрсету', today: 'Бүгін', export_excel: 'Excel-ге Экспорт', export_this_report: 'Бұл Есепті Экспорттау', export_filtered: 'Сүзілгендерді Экспорттау', export_all: 'Барлығын Экспорттау', share_whatsapp: 'WhatsApp-та Бөлісу', wood_acceptance: 'Ағаш қабылдау', veneer_cutting: 'Қабат кесу', drying: 'Кептіру', veneer_adding: 'Қабат қосу', gluing: 'Желімдеу', warehouse: 'Қойма', coming_soon: 'Жақында белсенді болады', no_permission: 'Рұқсатыңыз жоқ', open: 'Ашу', back: 'Артқа', drying_machine_report: 'Кептіру машинасы өндіріс есебі', data_entry: 'Деректерді енгізу', reports: 'Есептер', settings: 'Баптаулар', shift_selection: 'Ауысым таңдау', morning_shift: 'Таңғы ауысым', evening_shift: 'Кешкі ауысым', machine: 'Машина', width_mm: 'Ені (мм)', length_mm: 'Ұзындығы (мм)', thickness_mm: 'Қалыңдығы (мм)', poperechny: 'Көлденең', prodolny: 'Бойлық', quantity: 'Саны', volume: 'Көлем', total_poperechny: 'Көлденең жиыны', total_prodolny: 'Бойлық жиыны', grand_total: 'Жалпы көлем', total_quantity: 'Жалпы саны', save_report: 'Есепті сақтау', report_saved: 'Есеп сәтті сақталды!', no_reports: 'Әлі сақталған есептер жоқ.', date: 'Күні', shift: 'Ауысым', user: 'Пайдаланушы', morning: 'Таңғы', evening: 'Кешкі', danger_zone: 'Қауіпті аймақ', delete_warning: 'Бұл әрекет барлық сақталған есептерді қайтарып алмастан жояды.', delete_all_reports: 'Барлық есептерді тазалау', confirm_delete: 'Барлық есептер жойылады. Сенімдісіз бе?', statistics: 'Статистика', total_saved_reports: 'Жалпы сақталған есептер', only_admin: 'Тек' }
-        };
+    let state = {
+        lang: localStorage.getItem('lang') || 'tr',
+        loggedIn: false,
+        user: null,
+        tab: 'giris',
+        shift: 'sabah',
+        date: new Date().toISOString().split('T')[0],
+        machines: [
+            { id: 1, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 2, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 3, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 4, en: '', boy: '', kalinlik: '', qp: '', qd: '' }
+        ],
+        reports: JSON.parse(localStorage.getItem('reports') || '[]'),
+        filterStart: '',
+        filterEnd: '',
+        filtering: false
+    };
 
-        const USERS = {
-          'yonetici': { password: 'admin123', role: 'manager', name: 'Yönetici', permissions: ['agac_kabul','papel_soyma','kurutma','papel_ekleme','tutkallama','depo','raporlar','ayarlar'] },
-          'ali': { password: 'ali123', role: 'operator', name: 'Ali', permissions: ['kurutma'] }
-        };
+    const T = {
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En (mm)', length: 'Boy (mm)', thickness: 'Kalınlık (mm)', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo: yonetici/admin123' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина (мм)', length: 'Длина (мм)', thickness: 'Толщина (мм)', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо: yonetici/admin123' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені (мм)', length: 'Ұзындығы (мм)', thickness: 'Қалыңдығы (мм)', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо: yonetici/admin123' }
+    };
 
-        const LANGS = [
-          { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-          { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-          { code: 'kk', name: 'Қазақша', flag: '🇰🇿' }
-        ];
+    const t = (key) => T[state.lang][key] || key;
 
-        function App() {
-          const [lang, setLang] = useState('tr');
-          const [loggedIn, setLoggedIn] = useState(false);
-          const [user, setUser] = useState(null);
-          const [loginForm, setLoginForm] = useState({ u: '', p: '' });
-          const [err, setErr] = useState('');
-          const [tab, setTab] = useState('giris');
-          const [shift, setShift] = useState('sabah');
-          const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-          const [machines, setMachines] = useState([
-            { id: 1, w: '', l: '', t: '', qp: '', qd: '' },
-            { id: 2, w: '', l: '', t: '', qp: '', qd: '' },
-            { id: 3, w: '', l: '', t: '', qp: '', qd: '' },
-            { id: 4, w: '', l: '', t: '', qp: '', qd: '' }
-          ]);
-          const [reports, setReports] = useState([]);
-          const [success, setSuccess] = useState(false);
-          const [filterStart, setFilterStart] = useState('');
-          const [filterEnd, setFilterEnd] = useState('');
-          const [filtering, setFiltering] = useState(false);
+    function calcVol(m, type) {
+        const en = parseFloat(m.en) || 0;
+        const boy = parseFloat(m.boy) || 0;
+        const kalinlik = parseFloat(m.kalinlik) || 0;
+        const qty = parseFloat(type === 'p' ? m.qp : m.qd) || 0;
+        return ((en/1000) * (boy/1000) * (kalinlik/1000) * qty).toFixed(3);
+    }
 
-          const t = (k) => T[lang][k] || k;
+    function totalVol(type) {
+        return state.machines.reduce((sum, m) => sum + parseFloat(calcVol(m, type)), 0).toFixed(3);
+    }
 
-          useEffect(() => {
-            const sl = localStorage.getItem('app_lang');
-            if (sl) setLang(sl);
-            const lr = localStorage.getItem('reports');
-            if (lr) setReports(JSON.parse(lr));
-          }, []);
+    function totalQty(type) {
+        return state.machines.reduce((sum, m) => sum + (parseFloat(type === 'p' ? m.qp : m.qd) || 0), 0);
+    }
 
-          const changeLang = (l) => {
-            setLang(l);
-            localStorage.setItem('app_lang', l);
-          };
+    function grandTotal() {
+        return (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3);
+    }
 
-          const login = (e) => {
-            e.preventDefault();
-            const u = USERS[loginForm.u];
-            if (!u) { setErr(t('user_not_found')); return; }
-            if (u.password !== loginForm.p) { setErr(t('wrong_password')); return; }
-            setUser({ username: loginForm.u, ...u });
-            setLoggedIn(true);
-            setErr('');
-            setLoginForm({ u: '', p: '' });
-          };
-
-          const calcVol = (m, type) => {
-            const w = parseFloat(m.w) || 0;
-            const l = parseFloat(m.l) || 0;
-            const th = parseFloat(m.t) || 0;
-            const q = parseFloat(m[type === 'p' ? 'qp' : 'qd']) || 0;
-            return ((w/1000) * (l/1000) * (th/1000) * q).toFixed(3);
-          };
-
-          const totalVol = (type) => machines.reduce((sum, m) => sum + parseFloat(calcVol(m, type)), 0).toFixed(3);
-          const grandTotal = () => (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3);
-          const totalQty = (type) => machines.reduce((sum, m) => sum + (parseFloat(m[type === 'p' ? 'qp' : 'qd']) || 0), 0);
-
-          const updateMachine = (id, field, val) => {
-            setMachines(machines.map(m => m.id === id ? { ...m, [field]: val } : m));
-          };
-
-          const saveReport = () => {
-            const rd = new Date(date + 'T' + new Date().toTimeString().split(' ')[0]);
-            const r = {
-              id: Date.now(),
-              date: rd.toLocaleString(lang === 'ru' ? 'ru-RU' : lang === 'kk' ? 'kk-KZ' : 'tr-TR'),
-              ts: rd.getTime(),
-              shift,
-              user: user.name,
-              machines: machines.map(m => ({ ...m, vp: calcVol(m, 'p'), vd: calcVol(m, 'd') })),
-              tvp: totalVol('p'),
-              tvd: totalVol('d'),
-              tqp: totalQty('p'),
-              tqd: totalQty('d'),
-              gt: grandTotal()
-            };
-            const nr = [...reports, r];
-            setReports(nr);
-            localStorage.setItem('reports', JSON.stringify(nr));
-            setMachines([
-              { id: 1, w: '', l: '', t: '', qp: '', qd: '' },
-              { id: 2, w: '', l: '', t: '', qp: '', qd: '' },
-              { id: 3, w: '', l: '', t: '', qp: '', qd: '' },
-              { id: 4, w: '', l: '', t: '', qp: '', qd: '' }
-            ]);
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-          };
-
-          const deleteAll = () => {
-            if (window.confirm(t('confirm_delete'))) {
-              setReports([]);
-              localStorage.setItem('reports', '[]');
-            }
-          };
-
-          const deleteReport = (id) => {
-            const nr = reports.filter(r => r.id !== id);
-            setReports(nr);
-            localStorage.setItem('reports', JSON.stringify(nr));
-          };
-
-          const filterReports = () => {
-            if (!filterStart && !filterEnd) {
-              setFiltering(false);
-              return;
-            }
-            setFiltering(true);
-          };
-
-          const clearFilter = () => {
-            setFilterStart('');
-            setFilterEnd('');
-            setFiltering(false);
-          };
-
-          const getFilteredReports = () => {
-            if (!filtering) return reports;
-            const start = filterStart ? new Date(filterStart).setHours(0,0,0,0) : 0;
-            const end = filterEnd ? new Date(filterEnd).setHours(23,59,59,999) : Date.now() + 86400000;
-            return reports.filter(r => {
-              const rt = r.ts || new Date(r.date).getTime();
-              return rt >= start && rt <= end;
+    function exportExcel(rpts) {
+        let csv = '\uFEFF' + `Tarih,Vardiya,Kullanıcı,Makine,En,Boy,Kalınlık,Поперечный Adet,Поперечный m³,Продольный Adet,Продольный m³\n`;
+        rpts.forEach(r => {
+            r.machines.forEach(m => {
+                csv += `${r.date},${r.shift},${r.user},Makine ${m.id},${m.en},${m.boy},${m.kalinlik},${m.qp},${m.vp},${m.qd},${m.vd}\n`;
             });
-          };
+            csv += `${r.date},${r.shift},${r.user},TOPLAM,,,,${r.tqp},${r.tvp},${r.tqd},${r.tvd}\n`;
+            csv += `${r.date},${r.shift},${r.user},GENEL TOPLAM,,,,${r.tqp+r.tqd},${r.gt},,\n\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'rapor_' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+    }
 
-          const exportExcel = (rpts, filename) => {
-            let csv = '\uFEFF';
-            csv += `${t('date')},${t('shift')},${t('user')},${t('machine')},${t('width_mm')},${t('length_mm')},${t('thickness_mm')},${t('poperechny')} ${t('quantity')},${t('poperechny')} ${t('volume')},${t('prodolny')} ${t('quantity')},${t('prodolny')} ${t('volume')}\n`;
-            rpts.forEach(r => {
-              r.machines.forEach(m => {
-                csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('machine')} ${m.id},${m.w},${m.l},${m.t},${m.qp},${m.vp},${m.qd},${m.vd}\n`;
-              });
-              csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('total_poperechny')},,,,${r.tqp},${r.tvp},,\n`;
-              csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('total_prodolny')},,,,,,${r.tqd},${r.tvd}\n`;
-              csv += `${r.date},${r.
+    function shareWhatsApp(r) {
+        let msg = `*${t('title')}*\n📅 ${r.date}\n⏰ ${r.shift === 'sabah' ? t('morning') : t('evening')}\n👤 ${r.user}\n\n`;
+        r.machines.forEach(m => {
+            msg += `*${t('machine')} ${m.id}*\n${t('width')}: ${m.en} | ${t('length')}: ${m.boy} | ${t('thickness')}: ${m.kalinlik}\n🔵 ${t('poperechny')}: ${m.qp} (${m.vp} m³)\n🟢 ${t('prodolny')}: ${m.qd} (${m.vd} m³)\n\n`;
+        });
+        msg += `*${t('grandTotal')}*\n🔵 ${t('poperechny')}: ${r.tqp} → ${r.tvp} m³\n🟢 ${t('prodolny')}: ${r.tqd} → ${r.tvd} m³\n📊 ${t('total')}: ${r.gt} m³`;
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    function render() {
+        const app = document.getElementById('app');
+        
+        // LOGIN SCREEN
+        if (!state.loggedIn) {
+            app.innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
+                        <div class="text-center mb-6">
+                            <div class="text-6xl mb-4">🏭</div>
+                            <h1 class="text-2xl font-bold text-gray-800">${t('title')}</h1>
+                            <div class="flex justify-center gap-2 mt-4">
+                                <button onclick="changeLang('tr')" class="px-3 py-1 rounded ${state.lang==='tr'?'bg-indigo-600 text-white':'bg-gray-200'}">🇹🇷</button>
+                                <button onclick="changeLang('ru')" class="px-3 py-1 rounded ${state.lang==='ru'?'bg-indigo-600 text-white':'bg-gray-200'}">🇷🇺</button>
+                                <button onclick="changeLang('kk')" class="px-3 py-1 rounded ${state.lang==='kk'?'bg-indigo-600 text-white':'bg-gray-200'}">🇰🇿</button>
+                            </div>
+                        </div>
+                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded mb-4"></div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">${t('username')}</label>
+                                <input id="username" type="text" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="${t('username')}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">${t('password')}</label>
+                                <input id="password" type="password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="${t('password')}">
+                            </div>
+                            <button onclick="login()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700">${t('login')}</button>
+                        </div>
+                        <p class="text-center text-sm text-gray-500 mt-4">${t('demo')}</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // MAIN APP
+        const filteredReports = state.filtering ? state.reports.filter(r => {
+            const rt = r.ts || new Date(r.date).getTime();
+            const start = state.filterStart ? new Date(state.filterStart).setHours(0,0,0,0) : 0;
+            const end = state.filterEnd ? new Date(state.filterEnd).setHours(23,59,59,999) : Date.now() + 86400000;
+            return rt >= start && rt <= end;
+        }) : state.reports;
+
+        let machinesHTML = state.machines.map(m => `
+            <div class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="font-bold text-lg">${t('machine')} ${m.id}</span>
+                    <div class="text-sm">
+                        <span class="text-blue-600">${t('poperechny')}: ${calcVol(m,'p')} m³</span> | 
+                        <span class="text-green-600">${t('prodolny')}: ${calcVol(m,'d')} m³</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-5 gap-2">
+                    <div>
+                        <label class="text-xs">${t('width')}</label>
+                        <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" class="w-full p-2 border rounded" inputmode="numeric">
+                    </div>
+                    <div>
+                        <label class="text-xs">${t('length')}</label>
+                        <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" class="w-full p-2 border rounded" inputmode="numeric">
+                    </div>
+                    <div>
+                        <label class="text-xs">${t('thickness')}</label>
+                        <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" class="w-full p-2 border rounded" inputmode="decimal">
+                    </div>
+                    <div>
+                        <label class="text-xs text-blue-600">${t('poperechny')}</label>
+                        <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" class="w-full p-2 border border-blue-300 rounded" inputmode="numeric">
+                    </div>
+                    <div>
+                        <label class="text-xs text-green-600">${t('prodolny')}</label>
+                        <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" class="w-full p-2 border border-green-300 rounded" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        let reportsHTML = filteredReports.length === 0 ? `<p class="text-center text-gray-500 py-8">${t('noReports')}</p>` : 
+            filteredReports.slice().reverse().map(r => `
+                <div class="bg-white rounded-lg shadow p-4 mb-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <div class="font-bold">${r.date}</div>
+                            <div class="text-sm text-gray-600">${r.shift === 'sabah' ? t('morning') : t('evening')} | ${r.user}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 text-white px-2 py-1 rounded text-sm">📱</button>
+                            <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 text-white px-2 py-1 rounded text-sm">📊</button>
+                            ${state.user.isAdmin ? `<button onclick="deleteReport(${r.id})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                    ${r.machines.map(m => `
+                        <div class="border-l-4 border-indigo-400 pl-3 py-2 mb-2 text-sm">
+                            <div class="font-medium">${t('machine')} ${m.id}</div>
+                            <div>${t('width')}: ${m.en} | ${t('length')}: ${m.boy} | ${t('thickness')}: ${m.kalinlik}</div>
+                            <div><span class="text-blue-600">${t('poperechny')}: ${m.qp} (${m.vp} m³)</span> | <span class="text-green-600">${t('prodolny')}: ${m.qd} (${m.vd} m³)</span></div>
+                        </div>
+                    `).join('')}
+                    <div class="border-t pt-3 mt-3 grid grid-cols-2 gap-2">
+                        <div class="bg-blue-50 p-2 rounded"><span class="text-blue-700 font-medium">${t('poperechny')}:</span> ${r.tqp} ${t('qty')} → ${r.tvp} m³</div>
+                        <div class="bg-green-50 p-2 rounded"><span class="text-green-700 font-medium">${t('prodolny')}:</span> ${r.tqd} ${t('qty')} → ${r.tvd} m³</div>
+                    </div>
+                    <div class="bg-indigo-100 p-3 rounded mt-2 text-center">
+                        <span class="font-bold text-indigo-900">${t('grandTotal')}: ${r.gt} m³</span>
+                    </div>
+                </div>
+            `).join('');
+
+        app.innerHTML = `
+            <div class="min-h-screen bg-gray-100">
+                <div class="bg-indigo-700 text-white p-4">
+                    <div class="max-w-4xl mx-auto flex justify-between items-center">
+                        <div>
+                            <h1 class="text-xl font-bold">🏭 ${t('title')}</h1>
+                            <p class="text-sm opacity-80">${t('welcome')}, ${state.user.name}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="changeLang('tr')" class="px-2 py-1 rounded ${state.lang==='tr'?'bg-white text-indigo-700':'bg-indigo-600'}">🇹🇷</button>
+                            <button onclick="changeLang('ru')" class="px-2 py-1 rounded ${state.lang==='ru'?'bg-white text-indigo-700':'bg-indigo-600'}">🇷🇺</button>
+                            <button onclick="changeLang('kk')" class="px-2 py-1 rounded ${state.lang==='kk'?'bg-white text-indigo-700':'bg-indigo-600'}">🇰🇿</button>
+                            <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">${t('logout')}</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto p-4">
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="setTab('giris')" class="flex-1 py-2 rounded ${state.tab==='giris'?'bg-indigo-600 text-white':'bg-white'}">${t('dataEntry')}</button>
+                        <button onclick="setTab('raporlar')" class="flex-1 py-2 rounded ${state.tab==='raporlar'?'bg-indigo-600 text-white':'bg-white'}">${t('reports')}</button>
+                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-2 rounded ${state.tab==='ayarlar'?'bg-indigo-600 text-white':'bg-white'}">${t('settings')}</button>` : ''}
+                    </div>
+
+                    ${state.tab === 'giris' ? `
+                        <div class="bg-white rounded-lg shadow p-4 mb-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">${t('shift')}</label>
+                                    <div class="flex gap-2">
+                                        <button onclick="setShift('sabah')" class="flex-1 py-2 rounded ${state.shift==='sabah'?'bg-indigo-600 text-white':'bg-gray-200'}">${t('morning')}</button>
+                                        <button onclick="setShift('aksam')" class="flex-1 py-2 rounded ${state.shift==='aksam'?'bg-indigo-600 text-white':'bg-gray-200'}">${t('evening')}</button>
+                                    </div>
+                                </div>
+                                ${state.user.isAdmin ? `
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">${t('reportDate')}</label>
+                                        <input type="date" value="${state.date}" onchange="setDate(this.value)" class="w-full p-2 border rounded">
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${machinesHTML}
+
+                        <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-lg shadow p-4">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="bg-blue-50 p-3 rounded border-2 border-blue-200">
+                                    <div class="text-sm text-blue-700">${t('poperechny')} ${t('total')}</div>
+                                    <div class="text-xl font-bold text-blue-800">${totalVol('p')} m³</div>
+                                    <div class="text-xs text-blue-600">${t('qty')}: ${totalQty('p')}</div>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded border-2 border-green-200">
+                                    <div class="text-sm text-green-700">${t('prodolny')} ${t('total')}</div>
+                                    <div class="text-xl font-bold text-green-800">${totalVol('d')} m³</div>
+                                    <div class="text-xs text-green-600">${t('qty')}: ${totalQty('d')}</div>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-200 p-4 rounded mb-4 text-center">
+                                <div class="text-lg font-bold text-indigo-900">${t('grandTotal')}: ${grandTotal()} m³</div>
+                                <div class="text-sm text-indigo-700">${t('qty')}: ${totalQty('p') + totalQty('d')}</div>
+                            </div>
+                            <button onclick="saveReport()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">💾 ${t('save')}</button>
+                        </div>
+                    ` : ''}
+
+                    ${state.tab === 'raporlar' ? `
+                        <div class="bg-white rounded-lg shadow p-4 mb-4">
+                            <div class="grid grid-cols-3 gap-2 mb-3">
+                                <input type="date" value="${state.filterStart}" onchange="setFilterStart(this.value)" class="p-2 border rounded" placeholder="${t('startDate')}">
+                                <input type="date" value="${state.filterEnd}" onchange="setFilterEnd(this.value)" class="p-2 border rounded" placeholder="${t('endDate')}">
+                                <div class="flex gap-1">
+                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-600 text-white rounded">${t('filter')}</button>
+                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-500 text-white rounded">${t('showAll')}</button>` : ''}
+                                </div>
+                            </div>
+                            ${filteredReports.length > 0 ? `<button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="w-full bg-green-600 text-white py-2 rounded">📊 ${t('exportExcel')} (${filteredReports.length})</button>` : ''}
+                        </div>
+                        ${reportsHTML}
+                    ` : ''}
+
+                    ${state.tab === 'ayarlar' && state.user.isAdmin ? `
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <h3 class="font-bold text-red-700 mb-2">⚠️ ${t('settings')}</h3>
+                            <p class="text-sm text-gray-600 mb-4">${t('reports')}: ${state.reports.length}</p>
+                            <button onclick="deleteAllReports()" class="w-full bg-red-600 text-white py-2 rounded">🗑️ ${t('deleteAll')}</button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden">✅ ${t('saved')}</div>
+        `;
+    }
+
+    // GLOBAL FUNCTIONS
+    window.changeLang = (l) => { state.lang = l; localStorage.setItem('lang', l); render(); };
+    window.login = () => {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        const user = USERS[u];
+        if (!user || user.password !== p) {
+            document.getElementById('loginError').textContent = 'Kullanıcı veya şifre hatalı!';
+            document.getElementById('loginError').classList.remove('hidden');
+            return;
+        }
+        state.user = user;
+        state.loggedIn = true;
+        render();
+    };
+    window.logout = () => { state.loggedIn = false; state.user = null; state.tab = 'giris'; render(); };
+    window.setTab = (t) => { state.tab = t; render(); };
+    window.setShift = (s) => { state.shift = s; render(); };
+    window.setDate = (d) => { state.date = d; render(); };
+    window.updateMachine = (id, field, val) => {
+        state.machines = state.machines.map(m => m.id === id ? {...m, [field]: val} : m);
+        render();
+    };
+    window.saveReport = () => {
+        const r = {
+            id: Date.now(),
+            date: state.date + ' ' + new Date().toTimeString().slice(0,5),
+            ts: new Date(state.date).getTime(),
+            shift: state.shift,
+            user: state.user.name,
+            machines: state.machines.map(m => ({...m, vp: calcVol(m,'p'), vd: calcVol(m,'d')})),
+            tvp: totalVol('p'),
+            tvd: totalVol('d'),
+            tqp: totalQty('p'),
+            tqd: totalQty('d'),
+            gt: grandTotal()
+        };
+        state.reports.push(r);
+        localStorage.setItem('reports', JSON.stringify(state.reports));
+        state.machines = [
+            { id: 1, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 2, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 3, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
+            { id: 4, en: '', boy: '', kalinlik: '', qp: '', qd: '' }
+        ];
+        render();
+        document.getElementById('successMsg').classList.remove('hidden');
+        setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
+    };
+    window.deleteReport = (id) => {
+        state.reports = state.reports.filter(r => r.id !== id);
+        localStorage.setItem('reports', JSON.stringify(state.reports));
+        render();
+    };
+    window.deleteAllReports = () => {
+        if (confirm(t('confirmDelete'))) {
+            state.reports = [];
+            localStorage.setItem('reports', '[]');
+            render();
+        }
+    };
+    window.setFilterStart = (d) => { state.filterStart = d; };
+    window.setFilterEnd = (d) => { state.filterEnd = d; };
+    window.applyFilter = () => { state.filtering = true; render(); };
+    window.clearFilter = () => { state.filterStart = ''; state.filterEnd = ''; state.filtering = false; render(); };
+    window.exportExcel = exportExcel;
+    window.shareWhatsApp = shareWhatsApp;
+
+    // INIT
+    render();
+    </script>
+</body>
+</html>
