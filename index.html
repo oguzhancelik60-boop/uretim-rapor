@@ -2,69 +2,192 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Üretim Rapor Sistemi - Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="description" content="Üretim Rapor Sistemi - Fabrika üretim takip uygulaması">
+    <title>Üretim Rapor Sistemi</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiw5xyZXRpbSBSYXBvciBTaXN0ZW1pIiwic2hvcnRfbmFtZSI6IsOccmV0aW0gUmFwb3IiLCJkZXNjcmlwdGlvbiI6IkZhYnJpa2Egw7xyZXRpbSBzw7xyZcOnbGVyaSB0YWtpcCB2ZSByYXBvcmxhbWEgc2lzdGVtaSIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjNEY0NkU1Iiwib3JpZW50YXRpb24iOiJwb3J0cmFpdC1wcmltYXJ5IiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0Nzdmcgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnJTNFJTNDZGVmcyUzRSUzQ2xpbmVhckdyYWRpZW50IGlkPSdnJyB4MT0nMCUyNScgeTE9JzAlMjUnIHgyPScxMDAlMjUnIHkyPScxMDAlMjUnJTNFJTNDc3RvcCBvZmZzZXQ9JzAlMjUnIHN0eWxlPSdzdG9wLWNvbG9yOiU2NjdlZWE7c3RvcC1vcGFjaXR5OjEnLyUzRSUzQ3N0b3Agb2Zmc2V0PScxMDAlMjUnIHN0eWxlPSdzdG9wLWNvbG9yOiU3NjRiYTI7c3RvcC1vcGFjaXR5OjEnLyUzRSUzQy9saW5lYXJHcmFkaWVudCUzRSUzQy9kZWZzJTNFJTNDcmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0ndXJsKCUyM2cpJy8lM0UlM0N0ZXh0IHg9JzUwJyB5PSc2MCcgZm9udC1mYW1pbHk9J0FyaWFsJyBmb250LXNpemU9JzUwJyBmaWxsPSd3aGl0ZScgdGV4dC1hbmNob3I9J21pZGRsZSclM0Xwn4+tJTNDL3RleHQlM0UlM0Mvc3ZnJTNFIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn0seyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHdpZHRoPSc1MTInIGhlaWdodD0nNTEyJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyUzRSUzQ2RlZnMlM0UlM0NsaW5lYXJHcmFkaWVudCBpZD0nZycgeDE9JzAlMjUnIHkxPScwJTI1JyB4Mj0nMTAwJTI1JyB5Mj0nMTAwJTI1JyUzRSUzQ3N0b3Agb2Zmc2V0PScwJTI1JyBzdHlsZT0nc3RvcC1jb2xvcjolNjY3ZWVhO3N0b3Atb3BhY2l0eToxJy8lM0UlM0NzdG9wIG9mZnNldD0nMTAwJTI1JyBzdHlsZT0nc3RvcC1jb2xvcjolNzY0YmEyO3N0b3Atb3BhY2l0eToxJy8lM0UlM0MvbGluZWFyR3JhZGllbnQlM0UlM0MvZGVmcyUzRSUzQ3JlY3Qgd2lkdGg9JzEwMCcgaGVpZ2h0PScxMDAnIGZpbGw9J3VybCglMjNnKScvJTNFJTNDdGV4dCB4PSc1MCcgeT0nNjAnIGZvbnQtZmFtaWx5PSdBcmlhbCcgZm9udC1zaXplPSc1MCcgZmlsbD0nd2hpdGUnIHRleHQtYW5jaG9yPSdtaWRkbGUnJTNF8J+PrSUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIiwicHVycG9zZSI6ImFueSBtYXNrYWJsZSJ9XX0=">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg width='192' height='192' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23g)'/%3E%3Ctext x='50' y='60' font-family='Arial' font-size='50' fill='white' text-anchor='middle'%3E🏭%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E🏭%3C/text%3E%3C/svg%3E">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Üretim Rapor">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-indigo-900 mb-2">🏭 Üretim Rapor Sistemi</h1>
-            <p class="text-gray-600">PWA Deployment Testi</p>
-        </div>
-        
-        <div class="space-y-4">
-            <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                <p class="text-green-800 font-semibold">✅ PWA Başarıyla Deploy Edildi!</p>
-                <p class="text-green-700 text-sm mt-2">Vercel deployment çalışıyor.</p>
-            </div>
-            
-            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <p class="text-blue-800 font-semibold">📱 Telefondan Test Edin:</p>
-                <ol class="text-blue-700 text-sm mt-2 space-y-1 list-decimal list-inside">
-                    <li>Bu sayfayı telefonunuzda açın</li>
-                    <li>Menü → "Ana ekrana ekle"</li>
-                    <li>Icon masaüstünde görünecek</li>
-                </ol>
-            </div>
-            
-            <button onclick="testExcel()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-                📊 Excel Export Test
-            </button>
-            
-            <button onclick="testWhatsApp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition">
-                📱 WhatsApp Test
-            </button>
-            
-            <div id="result" class="text-center text-sm text-gray-600 mt-4"></div>
-        </div>
-    </div>
+<body>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
     <script>
-        function testExcel() {
-            const csv = '\uFEFF' + 'Test,Data,123\nÜretim,Rapor,456';
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'test-rapor.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            document.getElementById('result').innerHTML = '✅ Excel dosyası indirildi!';
-        }
-        
-        function testWhatsApp() {
-            const message = '*Test Mesajı*\n\nPWA deployment çalışıyor! ✅';
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
-            
-            document.getElementById('result').innerHTML = '✅ WhatsApp açıldı!';
-        }
-        
-        console.log('✅ Uygulama yüklendi!');
-    </script>
-</body>
-</html>
+        'use strict';
+        const e = React.createElement;
+        const { useState, useEffect } = React;
+
+        // TRANSLATIONS
+        const T = {
+          tr: { production_report_system: 'Üretim Rapor Sistemi', login_to_continue: 'Devam etmek için giriş yapın', username: 'Kullanıcı Adı', password: 'Şifre', enter_username: 'Kullanıcı adınızı girin', enter_password: 'Şifrenizi girin', login_button: 'Giriş Yap', logout_button: 'Çıkış', demo_users: 'Demo Kullanıcılar', full_access: 'Tüm erişim', user_not_found: 'Kullanıcı bulunamadı!', wrong_password: 'Şifre yanlış!', welcome: 'Hoş geldiniz', manager: 'Yönetici', operator: 'Operatör', report_date: 'Rapor Tarihi', select_date: 'Tarih Seç', filter_reports: 'Raporları Filtrele', start_date: 'Başlangıç Tarihi', end_date: 'Bitiş Tarihi', filter: 'Filtrele', show_all: 'Tümünü Göster', today: 'Bugün', export_excel: 'Excel\'e Aktar', export_this_report: 'Bu Raporu Aktar', export_filtered: 'Filtrelenenleri Aktar', export_all: 'Tümünü Aktar', share_whatsapp: 'WhatsApp\'ta Paylaş', wood_acceptance: 'Ağaç Kabul', veneer_cutting: 'Papel Soyma', drying: 'Kurutma', veneer_adding: 'Papel Ekleme', gluing: 'Tutkallama', warehouse: 'Depo', coming_soon: 'Yakında Aktif Olacak', no_permission: 'Yetkiniz Yok', open: 'Giriş Yap', back: 'Geri', drying_machine_report: 'Kurutma Makinesi Üretim Raporu', data_entry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift_selection: 'Vardiya Seçimi', morning_shift: 'Sabah Vardiyası', evening_shift: 'Akşam Vardiyası', machine: 'Makine', width_mm: 'En (mm)', length_mm: 'Boy (mm)', thickness_mm: 'Kalınlık (mm)', poperechny: 'Поперечный', prodolny: 'Продольный', quantity: 'Adet', volume: 'Hacim', total_poperechny: 'Поперечный Toplam', total_prodolny: 'Продольный Toplam', grand_total: 'Genel Toplam Hacim', total_quantity: 'Toplam Adet', save_report: 'Raporu Kaydet', report_saved: 'Rapor başarıyla kaydedildi!', no_reports: 'Henüz kayıtlı rapor bulunmuyor.', date: 'Tarih', shift: 'Vardiya', user: 'Kullanıcı', morning: 'Sabah', evening: 'Akşam', danger_zone: 'Tehlikeli Bölge', delete_warning: 'Bu işlem tüm kayıtlı raporları kalıcı olarak silecektir.', delete_all_reports: 'Tüm Raporları Sıfırla', confirm_delete: 'Tüm raporlar silinecek. Emin misiniz?', statistics: 'İstatistikler', total_saved_reports: 'Toplam Kayıtlı Rapor', only_admin: 'Sadece' },
+          ru: { production_report_system: 'Система Производственных Отчётов', login_to_continue: 'Войдите для продолжения', username: 'Имя пользователя', password: 'Пароль', enter_username: 'Введите имя пользователя', enter_password: 'Введите пароль', login_button: 'Войти', logout_button: 'Выход', demo_users: 'Демо пользователи', full_access: 'Полный доступ', user_not_found: 'Пользователь не найден!', wrong_password: 'Неверный пароль!', welcome: 'Добро пожаловать', manager: 'Менеджер', operator: 'Оператор', report_date: 'Дата Отчёта', select_date: 'Выбрать Дату', filter_reports: 'Фильтр Отчётов', start_date: 'Начальная Дата', end_date: 'Конечная Дата', filter: 'Фильтр', show_all: 'Показать Все', today: 'Сегодня', export_excel: 'Экспорт в Excel', export_this_report: 'Экспорт Этого Отчёта', export_filtered: 'Экспорт Фильтрованных', export_all: 'Экспорт Всех', share_whatsapp: 'Поделиться в WhatsApp', wood_acceptance: 'Приём Дерева', veneer_cutting: 'Резка Шпона', drying: 'Сушка', veneer_adding: 'Добавление Шпона', gluing: 'Склеивание', warehouse: 'Склад', coming_soon: 'Скоро будет активен', no_permission: 'Нет доступа', open: 'Открыть', back: 'Назад', drying_machine_report: 'Отчёт о Производстве Сушильных Машин', data_entry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift_selection: 'Выбор Смены', morning_shift: 'Утренняя Смена', evening_shift: 'Вечерняя Смена', machine: 'Машина', width_mm: 'Ширина (мм)', length_mm: 'Длина (мм)', thickness_mm: 'Толщина (мм)', poperechny: 'Поперечный', prodolny: 'Продольный', quantity: 'Количество', volume: 'Объём', total_poperechny: 'Поперечный Итого', total_prodolny: 'Продольный Итого', grand_total: 'Общий Объём', total_quantity: 'Всего Количество', save_report: 'Сохранить Отчёт', report_saved: 'Отчёт успешно сохранён!', no_reports: 'Пока нет сохранённых отчётов.', date: 'Дата', shift: 'Смена', user: 'Пользователь', morning: 'Утренняя', evening: 'Вечерняя', danger_zone: 'Опасная Зона', delete_warning: 'Это действие безвозвратно удалит все сохранённые отчёты.', delete_all_reports: 'Очистить Все Отчёты', confirm_delete: 'Все отчёты будут удалены. Вы уверены?', statistics: 'Статистика', total_saved_reports: 'Всего Сохранённых Отчётов', only_admin: 'Только' },
+          kk: { production_report_system: 'Өндіріс есебі жүйесі', login_to_continue: 'Жалғастыру үшін кіріңіз', username: 'Пайдаланушы аты', password: 'Құпия сөз', enter_username: 'Пайдаланушы атын енгізіңіз', enter_password: 'Құпия сөзді енгізіңіз', login_button: 'Кіру', logout_button: 'Шығу', demo_users: 'Демо пайдаланушылар', full_access: 'Толық қол жеткізу', user_not_found: 'Пайдаланушы табылмады!', wrong_password: 'Құпия сөз қате!', welcome: 'Қош келдіңіз', manager: 'Менеджер', operator: 'Оператор', report_date: 'Есеп Күні', select_date: 'Күн Таңдау', filter_reports: 'Есептерді Сүзу', start_date: 'Басталу Күні', end_date: 'Аяқталу Күні', filter: 'Сүзу', show_all: 'Барлығын Көрсету', today: 'Бүгін', export_excel: 'Excel-ге Экспорт', export_this_report: 'Бұл Есепті Экспорттау', export_filtered: 'Сүзілгендерді Экспорттау', export_all: 'Барлығын Экспорттау', share_whatsapp: 'WhatsApp-та Бөлісу', wood_acceptance: 'Ағаш қабылдау', veneer_cutting: 'Қабат кесу', drying: 'Кептіру', veneer_adding: 'Қабат қосу', gluing: 'Желімдеу', warehouse: 'Қойма', coming_soon: 'Жақында белсенді болады', no_permission: 'Рұқсатыңыз жоқ', open: 'Ашу', back: 'Артқа', drying_machine_report: 'Кептіру машинасы өндіріс есебі', data_entry: 'Деректерді енгізу', reports: 'Есептер', settings: 'Баптаулар', shift_selection: 'Ауысым таңдау', morning_shift: 'Таңғы ауысым', evening_shift: 'Кешкі ауысым', machine: 'Машина', width_mm: 'Ені (мм)', length_mm: 'Ұзындығы (мм)', thickness_mm: 'Қалыңдығы (мм)', poperechny: 'Көлденең', prodolny: 'Бойлық', quantity: 'Саны', volume: 'Көлем', total_poperechny: 'Көлденең жиыны', total_prodolny: 'Бойлық жиыны', grand_total: 'Жалпы көлем', total_quantity: 'Жалпы саны', save_report: 'Есепті сақтау', report_saved: 'Есеп сәтті сақталды!', no_reports: 'Әлі сақталған есептер жоқ.', date: 'Күні', shift: 'Ауысым', user: 'Пайдаланушы', morning: 'Таңғы', evening: 'Кешкі', danger_zone: 'Қауіпті аймақ', delete_warning: 'Бұл әрекет барлық сақталған есептерді қайтарып алмастан жояды.', delete_all_reports: 'Барлық есептерді тазалау', confirm_delete: 'Барлық есептер жойылады. Сенімдісіз бе?', statistics: 'Статистика', total_saved_reports: 'Жалпы сақталған есептер', only_admin: 'Тек' }
+        };
+
+        const USERS = {
+          'yonetici': { password: 'admin123', role: 'manager', name: 'Yönetici', permissions: ['agac_kabul','papel_soyma','kurutma','papel_ekleme','tutkallama','depo','raporlar','ayarlar'] },
+          'ali': { password: 'ali123', role: 'operator', name: 'Ali', permissions: ['kurutma'] }
+        };
+
+        const LANGS = [
+          { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+          { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+          { code: 'kk', name: 'Қазақша', flag: '🇰🇿' }
+        ];
+
+        function App() {
+          const [lang, setLang] = useState('tr');
+          const [loggedIn, setLoggedIn] = useState(false);
+          const [user, setUser] = useState(null);
+          const [loginForm, setLoginForm] = useState({ u: '', p: '' });
+          const [err, setErr] = useState('');
+          const [tab, setTab] = useState('giris');
+          const [shift, setShift] = useState('sabah');
+          const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+          const [machines, setMachines] = useState([
+            { id: 1, w: '', l: '', t: '', qp: '', qd: '' },
+            { id: 2, w: '', l: '', t: '', qp: '', qd: '' },
+            { id: 3, w: '', l: '', t: '', qp: '', qd: '' },
+            { id: 4, w: '', l: '', t: '', qp: '', qd: '' }
+          ]);
+          const [reports, setReports] = useState([]);
+          const [success, setSuccess] = useState(false);
+          const [filterStart, setFilterStart] = useState('');
+          const [filterEnd, setFilterEnd] = useState('');
+          const [filtering, setFiltering] = useState(false);
+
+          const t = (k) => T[lang][k] || k;
+
+          useEffect(() => {
+            const sl = localStorage.getItem('app_lang');
+            if (sl) setLang(sl);
+            const lr = localStorage.getItem('reports');
+            if (lr) setReports(JSON.parse(lr));
+          }, []);
+
+          const changeLang = (l) => {
+            setLang(l);
+            localStorage.setItem('app_lang', l);
+          };
+
+          const login = (e) => {
+            e.preventDefault();
+            const u = USERS[loginForm.u];
+            if (!u) { setErr(t('user_not_found')); return; }
+            if (u.password !== loginForm.p) { setErr(t('wrong_password')); return; }
+            setUser({ username: loginForm.u, ...u });
+            setLoggedIn(true);
+            setErr('');
+            setLoginForm({ u: '', p: '' });
+          };
+
+          const calcVol = (m, type) => {
+            const w = parseFloat(m.w) || 0;
+            const l = parseFloat(m.l) || 0;
+            const th = parseFloat(m.t) || 0;
+            const q = parseFloat(m[type === 'p' ? 'qp' : 'qd']) || 0;
+            return ((w/1000) * (l/1000) * (th/1000) * q).toFixed(3);
+          };
+
+          const totalVol = (type) => machines.reduce((sum, m) => sum + parseFloat(calcVol(m, type)), 0).toFixed(3);
+          const grandTotal = () => (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3);
+          const totalQty = (type) => machines.reduce((sum, m) => sum + (parseFloat(m[type === 'p' ? 'qp' : 'qd']) || 0), 0);
+
+          const updateMachine = (id, field, val) => {
+            setMachines(machines.map(m => m.id === id ? { ...m, [field]: val } : m));
+          };
+
+          const saveReport = () => {
+            const rd = new Date(date + 'T' + new Date().toTimeString().split(' ')[0]);
+            const r = {
+              id: Date.now(),
+              date: rd.toLocaleString(lang === 'ru' ? 'ru-RU' : lang === 'kk' ? 'kk-KZ' : 'tr-TR'),
+              ts: rd.getTime(),
+              shift,
+              user: user.name,
+              machines: machines.map(m => ({ ...m, vp: calcVol(m, 'p'), vd: calcVol(m, 'd') })),
+              tvp: totalVol('p'),
+              tvd: totalVol('d'),
+              tqp: totalQty('p'),
+              tqd: totalQty('d'),
+              gt: grandTotal()
+            };
+            const nr = [...reports, r];
+            setReports(nr);
+            localStorage.setItem('reports', JSON.stringify(nr));
+            setMachines([
+              { id: 1, w: '', l: '', t: '', qp: '', qd: '' },
+              { id: 2, w: '', l: '', t: '', qp: '', qd: '' },
+              { id: 3, w: '', l: '', t: '', qp: '', qd: '' },
+              { id: 4, w: '', l: '', t: '', qp: '', qd: '' }
+            ]);
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
+          };
+
+          const deleteAll = () => {
+            if (window.confirm(t('confirm_delete'))) {
+              setReports([]);
+              localStorage.setItem('reports', '[]');
+            }
+          };
+
+          const deleteReport = (id) => {
+            const nr = reports.filter(r => r.id !== id);
+            setReports(nr);
+            localStorage.setItem('reports', JSON.stringify(nr));
+          };
+
+          const filterReports = () => {
+            if (!filterStart && !filterEnd) {
+              setFiltering(false);
+              return;
+            }
+            setFiltering(true);
+          };
+
+          const clearFilter = () => {
+            setFilterStart('');
+            setFilterEnd('');
+            setFiltering(false);
+          };
+
+          const getFilteredReports = () => {
+            if (!filtering) return reports;
+            const start = filterStart ? new Date(filterStart).setHours(0,0,0,0) : 0;
+            const end = filterEnd ? new Date(filterEnd).setHours(23,59,59,999) : Date.now() + 86400000;
+            return reports.filter(r => {
+              const rt = r.ts || new Date(r.date).getTime();
+              return rt >= start && rt <= end;
+            });
+          };
+
+          const exportExcel = (rpts, filename) => {
+            let csv = '\uFEFF';
+            csv += `${t('date')},${t('shift')},${t('user')},${t('machine')},${t('width_mm')},${t('length_mm')},${t('thickness_mm')},${t('poperechny')} ${t('quantity')},${t('poperechny')} ${t('volume')},${t('prodolny')} ${t('quantity')},${t('prodolny')} ${t('volume')}\n`;
+            rpts.forEach(r => {
+              r.machines.forEach(m => {
+                csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('machine')} ${m.id},${m.w},${m.l},${m.t},${m.qp},${m.vp},${m.qd},${m.vd}\n`;
+              });
+              csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('total_poperechny')},,,,${r.tqp},${r.tvp},,\n`;
+              csv += `${r.date},${r.shift === 'sabah' ? t('morning') : t('evening')},${r.user},${t('total_prodolny')},,,,,,${r.tqd},${r.tvd}\n`;
+              csv += `${r.date},${r.
