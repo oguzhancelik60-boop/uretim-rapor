@@ -7,6 +7,13 @@
     <title>Üretim Rapor Sistemi</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+        .input-field { font-size: 16px !important; }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div id="app"></div>
@@ -49,9 +56,9 @@
     };
 
     const T = {
-        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En (mm)', length: 'Boy (mm)', thickness: 'Kalınlık (mm)', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', fullAccess: 'Tüm erişim', onlyDrying: 'Sadece Kurutma' },
-        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина (мм)', length: 'Длина (мм)', thickness: 'Толщина (мм)', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', fullAccess: 'Полный доступ', onlyDrying: 'Только Сушка' },
-        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені (мм)', length: 'Ұзындығы (мм)', thickness: 'Қалыңдығы (мм)', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', fullAccess: 'Толық қол жеткізу', onlyDrying: 'Тек Кептіру' }
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', fullAccess: 'Tüm erişim', onlyDrying: 'Sadece Kurutma', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', fullAccess: 'Полный доступ', onlyDrying: 'Только Сушка', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', fullAccess: 'Толық қол жеткізу', onlyDrying: 'Тек Кептіру', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны' }
     };
 
     const t = (key) => T[state.lang][key] || key;
@@ -73,8 +80,7 @@
         let csv = '\uFEFF' + `Tarih,Vardiya,Kullanıcı,Makine,En,Boy,Kalınlık,Поперечный Adet,Поперечный m³,Продольный Adet,Продольный m³\n`;
         rpts.forEach(r => {
             r.machines.forEach(m => { csv += `${r.date},${r.shift},${r.user},Makine ${m.id},${m.en},${m.boy},${m.kalinlik},${m.qp},${m.vp},${m.qd},${m.vd}\n`; });
-            csv += `${r.date},${r.shift},${r.user},TOPLAM,,,,${r.tqp},${r.tvp},${r.tqd},${r.tvd}\n`;
-            csv += `${r.date},${r.shift},${r.user},GENEL TOPLAM,,,,${r.tqp+r.tqd},${r.gt},,\n\n`;
+            csv += `${r.date},${r.shift},${r.user},TOPLAM,,,,${r.tqp},${r.tvp},${r.tqd},${r.tvd}\n\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -84,9 +90,18 @@
     }
 
     function shareWhatsApp(r) {
-        let msg = `*${t('title')}*\n📅 ${r.date}\n⏰ ${r.shift === 'sabah' ? t('morning') : t('evening')}\n👤 ${r.user}\n\n`;
-        r.machines.forEach(m => { msg += `*${t('machine')} ${m.id}*\n🔵 ${t('poperechny')}: ${m.qp} (${m.vp} m³)\n🟢 ${t('prodolny')}: ${m.qd} (${m.vd} m³)\n\n`; });
-        msg += `*${t('grandTotal')}*: ${r.gt} m³`;
+        let msg = `*🏭 ${t('title')}*\n\n📅 ${r.date}\n⏰ ${r.shift === 'sabah' ? t('morning') : t('evening')}\n👤 ${r.user}\n\n`;
+        r.machines.forEach(m => { 
+            msg += `*${t('machine')} ${m.id}*\n`;
+            msg += `📐 ${m.en}×${m.boy}×${m.kalinlik} mm\n`;
+            msg += `🔵 ${t('poperechny')}: ${m.qp} ${t('qty')} (${m.vp} m³)\n`;
+            msg += `🟢 ${t('prodolny')}: ${m.qd} ${t('qty')} (${m.vd} m³)\n\n`; 
+        });
+        msg += `━━━━━━━━━━━━━━━\n`;
+        msg += `🔵 ${t('poperechny')}: ${r.tqp} ${t('qty')} → ${r.tvp} m³\n`;
+        msg += `🟢 ${t('prodolny')}: ${r.tqd} ${t('qty')} → ${r.tvd} m³\n`;
+        msg += `━━━━━━━━━━━━━━━\n`;
+        msg += `📊 *${t('grandTotal')}: ${r.gt} m³*`;
         window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
     }
 
@@ -97,32 +112,32 @@
         if (!state.loggedIn) {
             app.innerHTML = `
                 <div class="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center p-4">
-                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
-                        <div class="text-center mb-6">
-                            <div class="text-6xl mb-4">🏭</div>
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                        <div class="text-center mb-8">
+                            <div class="text-7xl mb-4">🏭</div>
                             <h1 class="text-2xl font-bold text-gray-800">${t('title')}</h1>
-                            <div class="flex justify-center gap-2 mt-4">
-                                <button onclick="changeLang('tr')" class="px-3 py-2 rounded ${state.lang==='tr'?'bg-indigo-600 text-white':'bg-gray-200'}">🇹🇷</button>
-                                <button onclick="changeLang('ru')" class="px-3 py-2 rounded ${state.lang==='ru'?'bg-indigo-600 text-white':'bg-gray-200'}">🇷🇺</button>
-                                <button onclick="changeLang('kk')" class="px-3 py-2 rounded ${state.lang==='kk'?'bg-indigo-600 text-white':'bg-gray-200'}">🇰🇿</button>
+                            <div class="flex justify-center gap-3 mt-5">
+                                <button onclick="changeLang('tr')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='tr'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇹🇷</button>
+                                <button onclick="changeLang('ru')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='ru'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇷🇺</button>
+                                <button onclick="changeLang('kk')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='kk'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇰🇿</button>
                             </div>
                         </div>
-                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded mb-4"></div>
+                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center"></div>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium mb-1">${t('username')}</label>
-                                <input id="username" type="text" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="${t('username')}">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">${t('username')}</label>
+                                <input id="username" type="text" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="${t('username')}">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-1">${t('password')}</label>
-                                <input id="password" type="password" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="${t('password')}">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">${t('password')}</label>
+                                <input id="password" type="password" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="${t('password')}">
                             </div>
-                            <button onclick="login()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700">${t('login')}</button>
+                            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">${t('login')}</button>
                         </div>
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-600">
-                            <p class="font-semibold mb-2">${t('demo')}:</p>
-                            <p>• yonetici / admin123 (${t('fullAccess')})</p>
-                            <p>• ali / ali123 (${t('onlyDrying')})</p>
+                        <div class="mt-8 p-4 bg-gray-50 rounded-xl text-sm text-gray-600">
+                            <p class="font-bold mb-2 text-gray-700">${t('demo')}:</p>
+                            <p class="mb-1">• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">yonetici</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">admin123</span></p>
+                            <p>• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali123</span></p>
                         </div>
                     </div>
                 </div>
@@ -130,44 +145,48 @@
             return;
         }
 
-        // MAIN MENU (Proses seçilmemişse)
+        // MAIN MENU
         if (!state.activeProses) {
             let prosesHTML = PROSESLER.map(p => {
                 const hasAccess = hasPermission(p.id);
                 return `
                     <div onclick="${hasAccess && p.active ? `selectProses('${p.id}')` : ''}" 
-                         class="bg-white rounded-xl shadow-lg p-6 cursor-pointer transition-all hover:shadow-xl ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : ''}">
+                         class="bg-white rounded-2xl shadow-lg p-6 transition-all ${hasAccess && p.active ? 'cursor-pointer hover:shadow-xl hover:scale-102 active:scale-98' : ''} ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : 'border-2 border-transparent'}">
                         <div class="flex items-center gap-4">
-                            <div class="${p.color} w-16 h-16 rounded-lg flex items-center justify-center text-3xl">${p.icon}</div>
+                            <div class="${p.color} w-16 h-16 rounded-xl flex items-center justify-center text-3xl shadow-lg">${p.icon}</div>
                             <div class="flex-1">
-                                <h3 class="text-xl font-bold">${p.name[state.lang]}</h3>
-                                ${!p.active ? `<p class="text-xs text-gray-500 mt-1">${t('comingSoon')}</p>` : ''}
-                                ${!hasAccess && p.active ? `<p class="text-xs text-red-500 mt-1">🔒 ${t('noPermission')}</p>` : ''}
+                                <h3 class="text-xl font-bold text-gray-800">${p.name[state.lang]}</h3>
+                                ${!p.active ? `<p class="text-sm text-amber-600 mt-1 font-medium">⏳ ${t('comingSoon')}</p>` : ''}
+                                ${!hasAccess && p.active ? `<p class="text-sm text-red-500 mt-1 font-medium">🔒 ${t('noPermission')}</p>` : ''}
+                                ${hasAccess && p.active ? `<p class="text-sm text-green-600 mt-1 font-medium">✓ ${t('open')}</p>` : ''}
                             </div>
                         </div>
-                        ${hasAccess && p.active ? `<button class="w-full mt-4 bg-indigo-100 text-indigo-700 py-2 rounded-lg font-medium hover:bg-indigo-200">${t('open')} →</button>` : ''}
                     </div>
                 `;
             }).join('');
 
             app.innerHTML = `
-                <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-                    <div class="max-w-6xl mx-auto">
-                        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100">
+                    <div class="bg-white shadow-lg">
+                        <div class="max-w-6xl mx-auto p-4">
                             <div class="flex items-center justify-between flex-wrap gap-4">
                                 <div>
-                                    <h1 class="text-3xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
-                                    <p class="text-gray-600 mt-1">${t('welcome')}, ${state.user.name} (${state.user.role})</p>
+                                    <h1 class="text-2xl md:text-3xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
+                                    <p class="text-gray-600 mt-1">${t('welcome')}, <span class="font-semibold">${state.user.name}</span></p>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded ${state.lang==='tr'?'bg-indigo-600 text-white':'bg-gray-200'}">🇹🇷</button>
-                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded ${state.lang==='ru'?'bg-indigo-600 text-white':'bg-gray-200'}">🇷🇺</button>
-                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded ${state.lang==='kk'?'bg-indigo-600 text-white':'bg-gray-200'}">🇰🇿</button>
-                                    <button onclick="logout()" class="bg-red-500 text-white px-4 py-1 rounded">${t('logout')}</button>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex bg-gray-100 rounded-lg p-1">
+                                        <button onclick="changeLang('tr')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='tr'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇹🇷</button>
+                                        <button onclick="changeLang('ru')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='ru'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇷🇺</button>
+                                        <button onclick="changeLang('kk')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='kk'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇰🇿</button>
+                                    </div>
+                                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all">${t('logout')}</button>
                                 </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                    <div class="max-w-6xl mx-auto p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             ${prosesHTML}
                         </div>
                     </div>
@@ -176,7 +195,7 @@
             return;
         }
 
-        // KURUTMA EKRANI
+        // KURUTMA SCREEN
         const filteredReports = state.filtering ? state.reports.filter(r => {
             const rt = r.ts || new Date(r.date).getTime();
             const start = state.filterStart ? new Date(state.filterStart).setHours(0,0,0,0) : 0;
@@ -185,116 +204,243 @@
         }) : state.reports;
 
         let machinesHTML = state.machines.map(m => `
-            <div class="bg-white rounded-lg shadow p-4 mb-4">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-bold text-lg">${t('machine')} ${m.id}</span>
-                    <div class="text-sm">
-                        <span class="text-blue-600">${t('poperechny')}: ${calcVol(m,'p')} m³</span> | 
-                        <span class="text-green-600">${t('prodolny')}: ${calcVol(m,'d')} m³</span>
+            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4 border-l-4 border-orange-400">
+                <!-- Makine Başlık -->
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
+                        <span class="font-bold text-lg text-gray-800">${t('machine')} ${m.id}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500 mb-1">${t('volume')}</div>
+                        <div class="flex gap-2">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'p')} m³</span>
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'d')} m³</span>
+                        </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-5 gap-2">
-                    <div><label class="text-xs">${t('width')}</label><input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" class="w-full p-2 border rounded" inputmode="numeric"></div>
-                    <div><label class="text-xs">${t('length')}</label><input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" class="w-full p-2 border rounded" inputmode="numeric"></div>
-                    <div><label class="text-xs">${t('thickness')}</label><input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" class="w-full p-2 border rounded" inputmode="decimal"></div>
-                    <div><label class="text-xs text-blue-600">${t('poperechny')}</label><input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" class="w-full p-2 border border-blue-300 rounded" inputmode="numeric"></div>
-                    <div><label class="text-xs text-green-600">${t('prodolny')}</label><input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" class="w-full p-2 border border-green-300 rounded" inputmode="numeric"></div>
+                
+                <!-- Ölçüler Bölümü -->
+                <div class="mb-4">
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">📐 ${t('dimensions')} (${t('mm')})</div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">${t('width')}</label>
+                            <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" 
+                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="numeric" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">${t('length')}</label>
+                            <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" 
+                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="numeric" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">${t('thickness')}</label>
+                            <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" 
+                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="decimal" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Papel Sayıları Bölümü -->
+                <div>
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">📦 ${t('quantities')}</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
+                            <label class="block text-xs text-blue-700 font-bold mb-1">${t('poperechny')}</label>
+                            <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" 
+                                   class="input-field w-full p-3 bg-white border-2 border-blue-300 rounded-xl text-center font-bold text-blue-700 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
+                                   inputmode="numeric" placeholder="0">
+                        </div>
+                        <div class="bg-green-50 rounded-xl p-3 border-2 border-green-200">
+                            <label class="block text-xs text-green-700 font-bold mb-1">${t('prodolny')}</label>
+                            <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" 
+                                   class="input-field w-full p-3 bg-white border-2 border-green-300 rounded-xl text-center font-bold text-green-700 text-lg focus:border-green-500 focus:ring-2 focus:ring-green-200" 
+                                   inputmode="numeric" placeholder="0">
+                        </div>
+                    </div>
                 </div>
             </div>
         `).join('');
 
-        let reportsHTML = filteredReports.length === 0 ? `<p class="text-center text-gray-500 py-8">${t('noReports')}</p>` : 
-            filteredReports.slice().reverse().map(r => `
-                <div class="bg-white rounded-lg shadow p-4 mb-4">
-                    <div class="flex justify-between items-start mb-3">
-                        <div><div class="font-bold">${r.date}</div><div class="text-sm text-gray-600">${r.shift === 'sabah' ? t('morning') : t('evening')} | ${r.user}</div></div>
-                        <div class="flex gap-2">
-                            <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 text-white px-2 py-1 rounded text-sm">📱</button>
-                            <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 text-white px-2 py-1 rounded text-sm">📊</button>
-                            ${state.user.isAdmin ? `<button onclick="deleteReport(${r.id})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">🗑️</button>` : ''}
+        let reportsHTML = filteredReports.length === 0 ? `
+            <div class="bg-white rounded-2xl shadow p-8 text-center">
+                <div class="text-6xl mb-4">📋</div>
+                <p class="text-gray-500">${t('noReports')}</p>
+            </div>
+        ` : filteredReports.slice().reverse().map(r => `
+            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
+                <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
+                    <div>
+                        <div class="font-bold text-lg text-gray-800">${r.date}</div>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="inline-flex items-center gap-1">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.shift === 'sabah' ? t('morning') : t('evening')}</span>
+                            <span class="mx-2">•</span>
+                            <span>👤 ${r.user}</span>
                         </div>
                     </div>
-                    ${r.machines.map(m => `<div class="border-l-4 border-indigo-400 pl-3 py-2 mb-2 text-sm"><div class="font-medium">${t('machine')} ${m.id}</div><div><span class="text-blue-600">${t('poperechny')}: ${m.qp} (${m.vp} m³)</span> | <span class="text-green-600">${t('prodolny')}: ${m.qd} (${m.vd} m³)</span></div></div>`).join('')}
-                    <div class="bg-indigo-100 p-3 rounded mt-2 text-center"><span class="font-bold text-indigo-900">${t('grandTotal')}: ${r.gt} m³</span></div>
+                    <div class="flex gap-2">
+                        <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 hover:bg-green-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">📱</button>
+                        <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">📊</button>
+                        ${state.user.isAdmin ? `<button onclick="deleteReport(${r.id})" class="bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">🗑️</button>` : ''}
+                    </div>
                 </div>
-            `).join('');
-
-        app.innerHTML = `
-            <div class="min-h-screen bg-gray-100">
-                <div class="bg-indigo-700 text-white p-4">
-                    <div class="max-w-4xl mx-auto flex justify-between items-center flex-wrap gap-2">
-                        <div class="flex items-center gap-4">
-                            <button onclick="goBack()" class="bg-indigo-600 px-3 py-1 rounded">← ${t('back')}</button>
-                            <div>
-                                <h1 class="text-xl font-bold">🔥 Kurutma</h1>
-                                <p class="text-sm opacity-80">${state.user.name}</p>
+                
+                <div class="space-y-2 mb-4">
+                    ${r.machines.map(m => `
+                        <div class="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm">${m.id}</div>
+                                <span class="text-sm text-gray-600">${m.en}×${m.boy}×${m.kalinlik}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qp} → ${m.vp}m³</span>
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qd} → ${m.vd}m³</span>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="changeLang('tr')" class="px-2 py-1 rounded ${state.lang==='tr'?'bg-white text-indigo-700':'bg-indigo-600'}">🇹🇷</button>
-                            <button onclick="changeLang('ru')" class="px-2 py-1 rounded ${state.lang==='ru'?'bg-white text-indigo-700':'bg-indigo-600'}">🇷🇺</button>
-                            <button onclick="changeLang('kk')" class="px-2 py-1 rounded ${state.lang==='kk'?'bg-white text-indigo-700':'bg-indigo-600'}">🇰🇿</button>
-                            <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">${t('logout')}</button>
+                    `).join('')}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="bg-blue-100 rounded-xl p-3 text-center">
+                        <div class="text-xs text-blue-600 font-semibold">${t('poperechny')}</div>
+                        <div class="text-lg font-bold text-blue-800">${r.tqp} ${t('qty')} → ${r.tvp} m³</div>
+                    </div>
+                    <div class="bg-green-100 rounded-xl p-3 text-center">
+                        <div class="text-xs text-green-600 font-semibold">${t('prodolny')}</div>
+                        <div class="text-lg font-bold text-green-800">${r.tqd} ${t('qty')} → ${r.tvd} m³</div>
+                    </div>
+                </div>
+                
+                <div class="bg-indigo-100 rounded-xl p-4 text-center">
+                    <div class="text-sm text-indigo-600 font-semibold">${t('grandTotal')}</div>
+                    <div class="text-2xl font-bold text-indigo-800">${r.gt} m³</div>
+                </div>
+            </div>
+        `).join('');
+
+        app.innerHTML = `
+            <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
+                    <div class="max-w-4xl mx-auto p-4">
+                        <div class="flex justify-between items-center flex-wrap gap-3">
+                            <div class="flex items-center gap-3">
+                                <button onclick="goBack()" class="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-xl font-medium transition-all">← ${t('back')}</button>
+                                <div>
+                                    <h1 class="text-xl font-bold flex items-center gap-2">🔥 ${PROSESLER.find(p=>p.id==='kurutma').name[state.lang]}</h1>
+                                    <p class="text-sm text-orange-100">${state.user.name}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex bg-white/20 rounded-lg p-1">
+                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded-md transition-all ${state.lang==='tr'?'bg-white text-orange-600 font-bold':''}">🇹🇷</button>
+                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded-md transition-all ${state.lang==='ru'?'bg-white text-orange-600 font-bold':''}">🇷🇺</button>
+                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded-md transition-all ${state.lang==='kk'?'bg-white text-orange-600 font-bold':''}">🇰🇿</button>
+                                </div>
+                                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-medium transition-all">${t('logout')}</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="max-w-4xl mx-auto p-4">
-                    <div class="flex gap-2 mb-4">
-                        <button onclick="setTab('giris')" class="flex-1 py-2 rounded font-medium ${state.tab==='giris'?'bg-indigo-600 text-white':'bg-white'}">${t('dataEntry')}</button>
-                        <button onclick="setTab('raporlar')" class="flex-1 py-2 rounded font-medium ${state.tab==='raporlar'?'bg-indigo-600 text-white':'bg-white'}">${t('reports')}</button>
-                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-2 rounded font-medium ${state.tab==='ayarlar'?'bg-indigo-600 text-white':'bg-white'}">${t('settings')}</button>` : ''}
+                    <!-- Tabs -->
+                    <div class="flex gap-2 mb-4 bg-white rounded-2xl p-2 shadow">
+                        <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='giris'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📝 ${t('dataEntry')}</button>
+                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')}</button>
+                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='ayarlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">⚙️ ${t('settings')}</button>` : ''}
                     </div>
 
                     ${state.tab === 'giris' ? `
-                        <div class="bg-white rounded-lg shadow p-4 mb-4">
+                        <!-- Vardiya & Tarih -->
+                        <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium mb-2">${t('shift')}</label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">${t('shift')}</label>
                                     <div class="flex gap-2">
-                                        <button onclick="setShift('sabah')" class="flex-1 py-2 rounded ${state.shift==='sabah'?'bg-indigo-600 text-white':'bg-gray-200'}">${t('morning')}</button>
-                                        <button onclick="setShift('aksam')" class="flex-1 py-2 rounded ${state.shift==='aksam'?'bg-indigo-600 text-white':'bg-gray-200'}">${t('evening')}</button>
+                                        <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.shift==='sabah'?'bg-amber-400 text-white shadow-lg':'bg-gray-100 text-gray-600 hover:bg-gray-200'}">🌅 ${t('morning')}</button>
+                                        <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.shift==='aksam'?'bg-indigo-500 text-white shadow-lg':'bg-gray-100 text-gray-600 hover:bg-gray-200'}">🌙 ${t('evening')}</button>
                                     </div>
                                 </div>
-                                ${state.user.isAdmin ? `<div><label class="block text-sm font-medium mb-2">${t('reportDate')}</label><input type="date" value="${state.date}" onchange="setDate(this.value)" class="w-full p-2 border rounded"></div>` : ''}
+                                ${state.user.isAdmin ? `
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">📅 ${t('reportDate')}</label>
+                                        <input type="date" value="${state.date}" onchange="setDate(this.value)" class="input-field w-full p-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500">
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
+                        
+                        <!-- Makineler -->
                         ${machinesHTML}
-                        <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-lg shadow p-4">
+                        
+                        <!-- Toplam -->
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-5 text-white">
                             <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div class="bg-blue-50 p-3 rounded border-2 border-blue-200"><div class="text-sm text-blue-700">${t('poperechny')} ${t('total')}</div><div class="text-xl font-bold text-blue-800">${totalVol('p')} m³</div><div class="text-xs text-blue-600">${t('qty')}: ${totalQty('p')}</div></div>
-                                <div class="bg-green-50 p-3 rounded border-2 border-green-200"><div class="text-sm text-green-700">${t('prodolny')} ${t('total')}</div><div class="text-xl font-bold text-green-800">${totalVol('d')} m³</div><div class="text-xs text-green-600">${t('qty')}: ${totalQty('d')}</div></div>
+                                <div class="bg-white/20 backdrop-blur rounded-xl p-4 text-center">
+                                    <div class="text-sm opacity-80">${t('poperechny')}</div>
+                                    <div class="text-2xl font-bold mt-1">${totalVol('p')} m³</div>
+                                    <div class="text-sm opacity-80 mt-1">${totalQty('p')} ${t('qty')}</div>
+                                </div>
+                                <div class="bg-white/20 backdrop-blur rounded-xl p-4 text-center">
+                                    <div class="text-sm opacity-80">${t('prodolny')}</div>
+                                    <div class="text-2xl font-bold mt-1">${totalVol('d')} m³</div>
+                                    <div class="text-sm opacity-80 mt-1">${totalQty('d')} ${t('qty')}</div>
+                                </div>
                             </div>
-                            <div class="bg-indigo-200 p-4 rounded mb-4 text-center"><div class="text-lg font-bold text-indigo-900">${t('grandTotal')}: ${grandTotal()} m³</div></div>
-                            <button onclick="saveReport()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">💾 ${t('save')}</button>
+                            <div class="bg-white/30 backdrop-blur rounded-xl p-4 text-center mb-4">
+                                <div class="text-lg opacity-90">${t('grandTotal')}</div>
+                                <div class="text-4xl font-bold mt-1">${grandTotal()} m³</div>
+                                <div class="text-sm opacity-80 mt-1">${totalQty('p') + totalQty('d')} ${t('qty')}</div>
+                            </div>
+                            <button onclick="saveReport()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl">💾 ${t('save')}</button>
                         </div>
                     ` : ''}
 
                     ${state.tab === 'raporlar' ? `
-                        <div class="bg-white rounded-lg shadow p-4 mb-4">
-                            <div class="grid grid-cols-3 gap-2 mb-3">
-                                <input type="date" value="${state.filterStart}" onchange="setFilterStart(this.value)" class="p-2 border rounded">
-                                <input type="date" value="${state.filterEnd}" onchange="setFilterEnd(this.value)" class="p-2 border rounded">
-                                <div class="flex gap-1">
-                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-600 text-white rounded">${t('filter')}</button>
-                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-500 text-white rounded">${t('showAll')}</button>` : ''}
+                        <!-- Filtre -->
+                        <div class="bg-white rounded-2xl shadow-lg p-4 mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">${t('startDate')}</label>
+                                    <input type="date" value="${state.filterStart}" onchange="setFilterStart(this.value)" class="w-full p-3 border-2 border-gray-200 rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">${t('endDate')}</label>
+                                    <input type="date" value="${state.filterEnd}" onchange="setFilterEnd(this.value)" class="w-full p-3 border-2 border-gray-200 rounded-xl">
+                                </div>
+                                <div class="flex items-end gap-2">
+                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold transition-all">${t('filter')}</button>
+                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-xl font-semibold transition-all">${t('showAll')}</button>` : ''}
                                 </div>
                             </div>
-                            ${filteredReports.length > 0 ? `<button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="w-full bg-green-600 text-white py-2 rounded">📊 ${t('exportExcel')} (${filteredReports.length})</button>` : ''}
+                            ${filteredReports.length > 0 ? `
+                                <button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="w-full mt-3 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-all">📊 ${t('exportExcel')} (${filteredReports.length})</button>
+                            ` : ''}
                         </div>
                         ${reportsHTML}
                     ` : ''}
 
                     ${state.tab === 'ayarlar' && state.user.isAdmin ? `
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <h3 class="font-bold text-red-700 mb-2">⚠️ ${t('settings')}</h3>
-                            <p class="text-sm text-gray-600 mb-4">${t('reports')}: ${state.reports.length}</p>
-                            <button onclick="deleteAllReports()" class="w-full bg-red-600 text-white py-2 rounded">🗑️ ${t('deleteAll')}</button>
+                        <div class="bg-white rounded-2xl shadow-lg p-5">
+                            <h3 class="text-xl font-bold text-red-600 mb-4">⚠️ ${t('settings')}</h3>
+                            <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                                <p class="text-gray-600">${t('reports')}: <span class="font-bold text-2xl text-indigo-600">${state.reports.length}</span></p>
+                            </div>
+                            <button onclick="deleteAllReports()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all">🗑️ ${t('deleteAll')}</button>
                         </div>
                     ` : ''}
                 </div>
             </div>
-            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden">✅ ${t('saved')}</div>
+            
+            <!-- Success Message -->
+            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl hidden transform transition-all">
+                ✅ ${t('saved')}
+            </div>
         `;
     }
 
@@ -304,7 +450,11 @@
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
         const user = USERS[u];
-        if (!user || user.password !== p) { document.getElementById('loginError').textContent = 'Hatalı giriş!'; document.getElementById('loginError').classList.remove('hidden'); return; }
+        if (!user || user.password !== p) { 
+            document.getElementById('loginError').textContent = 'Kullanıcı adı veya şifre hatalı!'; 
+            document.getElementById('loginError').classList.remove('hidden'); 
+            return; 
+        }
         state.user = user; state.loggedIn = true; render();
     };
     window.logout = () => { state.loggedIn = false; state.user = null; state.activeProses = null; state.tab = 'giris'; render(); };
@@ -318,7 +468,9 @@
         const r = { id: Date.now(), date: state.date + ' ' + new Date().toTimeString().slice(0,5), ts: new Date(state.date).getTime(), shift: state.shift, user: state.user.name, machines: state.machines.map(m => ({...m, vp: calcVol(m,'p'), vd: calcVol(m,'d')})), tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal() };
         state.reports.push(r); localStorage.setItem('reports', JSON.stringify(state.reports));
         state.machines = [{ id: 1, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 2, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 3, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 4, en: '', boy: '', kalinlik: '', qp: '', qd: '' }];
-        render(); document.getElementById('successMsg').classList.remove('hidden'); setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
+        render(); 
+        document.getElementById('successMsg').classList.remove('hidden'); 
+        setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
     };
     window.deleteReport = (id) => { state.reports = state.reports.filter(r => r.id !== id); localStorage.setItem('reports', JSON.stringify(state.reports)); render(); };
     window.deleteAllReports = () => { if (confirm(t('confirmDelete'))) { state.reports = []; localStorage.setItem('reports', '[]'); render(); } };
