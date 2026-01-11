@@ -9,10 +9,9 @@
     
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Üretim Rapor">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%234F46E5' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50'>🏭</text></svg>">
     
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,7 +23,6 @@
         input[type="number"] { -moz-appearance: textfield; }
         .input-field { font-size: 16px !important; }
         
-        /* PWA Install Banner */
         .install-banner {
             display: none;
             position: fixed;
@@ -44,7 +42,6 @@
             to { transform: translateY(0); opacity: 1; }
         }
         
-        /* Offline indicator */
         .offline-badge {
             display: none;
             position: fixed;
@@ -62,7 +59,6 @@
         }
         .offline-badge.show { display: flex; align-items: center; gap: 8px; }
         
-        /* Loading spinner */
         .spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-top: 3px solid white;
@@ -77,7 +73,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Sync indicator */
         .sync-badge {
             position: fixed;
             top: 10px;
@@ -95,17 +90,14 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <!-- Offline Badge -->
     <div id="offlineBadge" class="offline-badge">
         <span>📴</span> Çevrimdışı Mod
     </div>
     
-    <!-- Sync Badge -->
     <div id="syncBadge" class="sync-badge">
         <span>☁️</span> Senkronize
     </div>
     
-    <!-- PWA Install Banner -->
     <div id="installBanner" class="install-banner">
         <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -129,25 +121,19 @@
     const SUPABASE_URL = 'https://exxznkibcoyaemlqmcon.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4eHpua2liY295YWVtbHFtY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTk4MzMsImV4cCI6MjA4MzY5NTgzM30.AqAud6Mo6x1sy7FB_at8f2BnTZSVsytXHXC_b5WX0yQ';
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ==================== PWA SETUP ====================
     let deferredPrompt;
     
-    // Service Worker kayıt
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then((registration) => {
-                    console.log('SW registered:', registration.scope);
-                })
-                .catch((error) => {
-                    console.log('SW registration failed:', error);
-                });
+                .then((reg) => console.log('SW registered'))
+                .catch((err) => console.log('SW failed:', err));
         });
     }
     
-    // PWA Install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -161,10 +147,7 @@
     window.installPWA = () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('PWA installed');
-                }
+            deferredPrompt.userChoice.then((choice) => {
                 deferredPrompt = null;
                 document.getElementById('installBanner').style.display = 'none';
             });
@@ -176,7 +159,6 @@
         localStorage.setItem('pwaInstallDismissed', 'true');
     };
     
-    // Online/Offline status
     function updateOnlineStatus() {
         const badge = document.getElementById('offlineBadge');
         if (!navigator.onLine) {
@@ -190,13 +172,8 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
     
-    // ==================== APP CODE ====================
-    
-    const STANDART_OLCULER = {
-        en: '1250',
-        boy: '2500',
-        kalinlik: '1.5'
-    };
+    // ==================== APP STATE ====================
+    const STANDART_OLCULER = { en: '1250', boy: '2500', kalinlik: '1.5' };
 
     const USERS = {
         'yonetici': { password: 'admin123', role: 'Yönetici', name: 'Yönetici', isAdmin: true, permissions: ['agac_kabul','papel_soyma','kurutma','papel_ekleme','tutkallama','depo'] },
@@ -240,9 +217,9 @@
     };
 
     const T = {
-        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', fullAccess: 'Tüm erişim', onlyDrying: 'Sadece Kurutma', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', synced: 'Senkronize edildi' },
-        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', fullAccess: 'Полный доступ', onlyDrying: 'Только Сушка', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', synced: 'Синхронизировано' },
-        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', fullAccess: 'Толық қол жеткізу', onlyDrying: 'Тек Кептіру', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', synced: 'Синхрондалды' }
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', refresh: 'Обновить' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', refresh: 'Жаңарту' }
     };
 
     const t = (key) => T[state.lang][key] || key;
@@ -259,22 +236,21 @@
     function totalVol(type) { return state.machines.reduce((sum, m) => sum + parseFloat(calcVol(m, type)), 0).toFixed(3); }
     function totalQty(type) { return state.machines.reduce((sum, m) => sum + (parseFloat(type === 'p' ? m.qp : m.qd) || 0), 0); }
     function grandTotal() { return (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3); }
+    function isStandard(m) { return m.en === STANDART_OLCULER.en && m.boy === STANDART_OLCULER.boy && m.kalinlik === STANDART_OLCULER.kalinlik; }
 
     // ==================== SUPABASE FUNCTIONS ====================
-    
     async function loadReports() {
         state.loading = true;
         render();
         
         try {
-            const { data, error } = await supabase
+            const { data, error } = await db
                 .from('reports')
                 .select('*')
                 .order('created_at', { ascending: false });
             
             if (error) throw error;
             
-            // Supabase verisini uygulama formatına dönüştür
             state.reports = data.map(r => ({
                 id: r.id,
                 date: r.date,
@@ -290,8 +266,7 @@
             
             showSyncBadge();
         } catch (error) {
-            console.error('Raporlar yüklenirken hata:', error);
-            // Offline ise localStorage'dan yükle
+            console.error('Yükleme hatası:', error);
             state.reports = JSON.parse(localStorage.getItem('reports') || '[]');
         }
         
@@ -299,62 +274,46 @@
         render();
     }
     
-    async function saveReportToSupabase(report) {
+    async function saveReport(report) {
         try {
-            const { data, error } = await supabase
-                .from('reports')
-                .insert([{
-                    date: report.date,
-                    shift: report.shift,
-                    user_name: report.user,
-                    machines: report.machines,
-                    tvp: report.tvp,
-                    tvd: report.tvd,
-                    tqp: report.tqp,
-                    tqd: report.tqd,
-                    gt: report.gt
-                }])
-                .select();
+            const { error } = await db.from('reports').insert([{
+                date: report.date,
+                shift: report.shift,
+                user_name: report.user,
+                machines: report.machines,
+                tvp: report.tvp,
+                tvd: report.tvd,
+                tqp: report.tqp,
+                tqd: report.tqd,
+                gt: report.gt
+            }]);
             
             if (error) throw error;
-            
             showSyncBadge();
-            return data[0];
+            return true;
         } catch (error) {
-            console.error('Rapor kaydedilirken hata:', error);
-            // Offline ise localStorage'a kaydet
-            const reports = JSON.parse(localStorage.getItem('reports') || '[]');
-            reports.push(report);
-            localStorage.setItem('reports', JSON.stringify(reports));
-            return null;
+            console.error('Kaydetme hatası:', error);
+            return false;
         }
     }
     
-    async function deleteReportFromSupabase(id) {
+    async function deleteReport(id) {
         try {
-            const { error } = await supabase
-                .from('reports')
-                .delete()
-                .eq('id', id);
-            
+            const { error } = await db.from('reports').delete().eq('id', id);
             if (error) throw error;
             showSyncBadge();
         } catch (error) {
-            console.error('Rapor silinirken hata:', error);
+            console.error('Silme hatası:', error);
         }
     }
     
-    async function deleteAllReportsFromSupabase() {
+    async function deleteAllReports() {
         try {
-            const { error } = await supabase
-                .from('reports')
-                .delete()
-                .neq('id', 0); // Tümünü sil
-            
+            const { error } = await db.from('reports').delete().neq('id', 0);
             if (error) throw error;
             showSyncBadge();
         } catch (error) {
-            console.error('Raporlar silinirken hata:', error);
+            console.error('Toplu silme hatası:', error);
         }
     }
     
@@ -380,29 +339,16 @@
     function shareWhatsApp(r) {
         let msg = `*🏭 ${t('title')}*\n\n📅 ${r.date}\n⏰ ${r.shift === 'sabah' ? t('morning') : t('evening')}\n👤 ${r.user}\n\n`;
         r.machines.forEach(m => { 
-            msg += `*${t('machine')} ${m.id}*\n`;
-            msg += `📐 ${m.en}×${m.boy}×${m.kalinlik} mm\n`;
-            msg += `🔵 ${t('poperechny')}: ${m.qp} ${t('qty')} (${m.vp} m³)\n`;
-            msg += `🟢 ${t('prodolny')}: ${m.qd} ${t('qty')} (${m.vd} m³)\n\n`; 
+            msg += `*${t('machine')} ${m.id}*\n📐 ${m.en}×${m.boy}×${m.kalinlik} mm\n🔵 ${t('poperechny')}: ${m.qp} ${t('qty')} (${m.vp} m³)\n🟢 ${t('prodolny')}: ${m.qd} ${t('qty')} (${m.vd} m³)\n\n`; 
         });
-        msg += `━━━━━━━━━━━━━━━\n`;
-        msg += `🔵 ${t('poperechny')}: ${r.tqp} ${t('qty')} → ${r.tvp} m³\n`;
-        msg += `🟢 ${t('prodolny')}: ${r.tqd} ${t('qty')} → ${r.tvd} m³\n`;
-        msg += `━━━━━━━━━━━━━━━\n`;
-        msg += `📊 *${t('grandTotal')}: ${r.gt} m³*`;
+        msg += `━━━━━━━━━━━━━━━\n🔵 ${t('poperechny')}: ${r.tqp} ${t('qty')} → ${r.tvp} m³\n🟢 ${t('prodolny')}: ${r.tqd} ${t('qty')} → ${r.tvd} m³\n━━━━━━━━━━━━━━━\n📊 *${t('grandTotal')}: ${r.gt} m³*`;
         window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
     }
 
-    function isStandard(m) {
-        return m.en === STANDART_OLCULER.en && 
-               m.boy === STANDART_OLCULER.boy && 
-               m.kalinlik === STANDART_OLCULER.kalinlik;
-    }
-
+    // ==================== RENDER ====================
     function render() {
         const app = document.getElementById('app');
         
-        // LOGIN SCREEN
         if (!state.loggedIn) {
             app.innerHTML = `
                 <div class="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center p-4">
@@ -421,208 +367,74 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">${t('username')}</label>
-                                <input id="username" type="text" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="${t('username')}">
+                                <input id="username" type="text" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="${t('username')}">
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">${t('password')}</label>
-                                <input id="password" type="password" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="${t('password')}">
+                                <input id="password" type="password" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="${t('password')}">
                             </div>
-                            <button onclick="login()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">${t('login')}</button>
+                            <button onclick="doLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg">${t('login')}</button>
                         </div>
                         <div class="mt-8 p-4 bg-gray-50 rounded-xl text-sm text-gray-600">
-                            <p class="font-bold mb-2 text-gray-700">${t('demo')}:</p>
+                            <p class="font-bold mb-2">${t('demo')}:</p>
                             <p class="mb-1">• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">yonetici</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">admin123</span></p>
                             <p>• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali123</span></p>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
             return;
         }
 
-        // MAIN MENU
         if (!state.activeProses) {
-            let prosesHTML = PROSESLER.map(p => {
-                const hasAccess = hasPermission(p.id);
-                return `
-                    <div onclick="${hasAccess && p.active ? `selectProses('${p.id}')` : ''}" 
-                         class="bg-white rounded-2xl shadow-lg p-6 transition-all ${hasAccess && p.active ? 'cursor-pointer hover:shadow-xl hover:scale-102 active:scale-98' : ''} ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : 'border-2 border-transparent'}">
-                        <div class="flex items-center gap-4">
-                            <div class="${p.color} w-16 h-16 rounded-xl flex items-center justify-center text-3xl shadow-lg">${p.icon}</div>
-                            <div class="flex-1">
-                                <h3 class="text-xl font-bold text-gray-800">${p.name[state.lang]}</h3>
-                                ${!p.active ? `<p class="text-sm text-amber-600 mt-1 font-medium">⏳ ${t('comingSoon')}</p>` : ''}
-                                ${!hasAccess && p.active ? `<p class="text-sm text-red-500 mt-1 font-medium">🔒 ${t('noPermission')}</p>` : ''}
-                                ${hasAccess && p.active ? `<p class="text-sm text-green-600 mt-1 font-medium">✓ ${t('open')}</p>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
             app.innerHTML = `
                 <div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100">
                     <div class="bg-white shadow-lg">
                         <div class="max-w-6xl mx-auto p-4">
                             <div class="flex items-center justify-between flex-wrap gap-4">
                                 <div>
-                                    <h1 class="text-2xl md:text-3xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
+                                    <h1 class="text-2xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
                                     <p class="text-gray-600 mt-1">${t('welcome')}, <span class="font-semibold">${state.user.name}</span></p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <div class="flex bg-gray-100 rounded-lg p-1">
-                                        <button onclick="changeLang('tr')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='tr'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇹🇷</button>
-                                        <button onclick="changeLang('ru')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='ru'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇷🇺</button>
-                                        <button onclick="changeLang('kk')" class="px-3 py-1.5 rounded-md transition-all ${state.lang==='kk'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇰🇿</button>
+                                        <button onclick="changeLang('tr')" class="px-3 py-1.5 rounded-md ${state.lang==='tr'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇹🇷</button>
+                                        <button onclick="changeLang('ru')" class="px-3 py-1.5 rounded-md ${state.lang==='ru'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇷🇺</button>
+                                        <button onclick="changeLang('kk')" class="px-3 py-1.5 rounded-md ${state.lang==='kk'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇰🇿</button>
                                     </div>
-                                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all">${t('logout')}</button>
+                                    <button onclick="doLogout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium">${t('logout')}</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="max-w-6xl mx-auto p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${prosesHTML}
+                            ${PROSESLER.map(p => {
+                                const hasAccess = hasPermission(p.id);
+                                return `
+                                    <div onclick="${hasAccess && p.active ? `selectProses('${p.id}')` : ''}" 
+                                         class="bg-white rounded-2xl shadow-lg p-6 transition-all ${hasAccess && p.active ? 'cursor-pointer hover:shadow-xl' : ''} ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : ''}">
+                                        <div class="flex items-center gap-4">
+                                            <div class="${p.color} w-16 h-16 rounded-xl flex items-center justify-center text-3xl shadow-lg">${p.icon}</div>
+                                            <div>
+                                                <h3 class="text-xl font-bold text-gray-800">${p.name[state.lang]}</h3>
+                                                ${!p.active ? `<p class="text-sm text-amber-600 mt-1">⏳ ${t('comingSoon')}</p>` : ''}
+                                                ${!hasAccess && p.active ? `<p class="text-sm text-red-500 mt-1">🔒 ${t('noPermission')}</p>` : ''}
+                                                ${hasAccess && p.active ? `<p class="text-sm text-green-600 mt-1">✓ ${t('open')}</p>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>`;
+                            }).join('')}
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
             return;
         }
 
-        // KURUTMA SCREEN
+        // KURUTMA
         const filteredReports = state.filtering ? state.reports.filter(r => {
-            const dateStr = r.date.split(' ')[0];
-            return (!state.filterStart || dateStr >= state.filterStart) && 
-                   (!state.filterEnd || dateStr <= state.filterEnd);
+            const d = r.date.split(' ')[0];
+            return (!state.filterStart || d >= state.filterStart) && (!state.filterEnd || d <= state.filterEnd);
         }) : state.reports;
-
-        let machinesHTML = state.machines.map(m => {
-            const isStd = isStandard(m);
-            return `
-            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4 border-l-4 border-orange-400">
-                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
-                        <span class="font-bold text-lg text-gray-800">${t('machine')} ${m.id}</span>
-                        ${isStd ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-semibold">✓ ${t('standard')}</span>` : `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-semibold">⚡ Özel</span>`}
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xs text-gray-500 mb-1">${t('volume')}</div>
-                        <div class="flex gap-2">
-                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'p')} m³</span>
-                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'d')} m³</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">📐 ${t('dimensions')} (${t('mm')})</div>
-                        ${!isStd ? `<button onclick="resetToStandard(${m.id})" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg transition-all">↺ ${t('standard')}</button>` : ''}
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">${t('width')}</label>
-                            <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" 
-                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="numeric" placeholder="1250">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">${t('length')}</label>
-                            <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" 
-                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="numeric" placeholder="2500">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">${t('thickness')}</label>
-                            <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" 
-                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="decimal" placeholder="1.5" step="0.1">
-                        </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">📦 ${t('quantities')}</div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
-                            <label class="block text-xs text-blue-700 font-bold mb-1">${t('poperechny')}</label>
-                            <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" 
-                                   class="input-field w-full p-3 bg-white border-2 border-blue-300 rounded-xl text-center font-bold text-blue-700 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
-                                   inputmode="numeric" placeholder="0">
-                        </div>
-                        <div class="bg-green-50 rounded-xl p-3 border-2 border-green-200">
-                            <label class="block text-xs text-green-700 font-bold mb-1">${t('prodolny')}</label>
-                            <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" 
-                                   class="input-field w-full p-3 bg-white border-2 border-green-300 rounded-xl text-center font-bold text-green-700 text-lg focus:border-green-500 focus:ring-2 focus:ring-green-200" 
-                                   inputmode="numeric" placeholder="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `}).join('');
-
-        let reportsHTML = state.loading ? `
-            <div class="bg-white rounded-2xl shadow p-8 text-center">
-                <div class="spinner mx-auto mb-4" style="border-top-color: #4F46E5; width: 40px; height: 40px;"></div>
-                <p class="text-gray-500">${t('loading')}</p>
-            </div>
-        ` : filteredReports.length === 0 ? `
-            <div class="bg-white rounded-2xl shadow p-8 text-center">
-                <div class="text-6xl mb-4">📋</div>
-                <p class="text-gray-500">${t('noReports')}</p>
-            </div>
-        ` : filteredReports.map(r => `
-            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
-                <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
-                    <div>
-                        <div class="font-bold text-lg text-gray-800">${r.date}</div>
-                        <div class="text-sm text-gray-500 mt-1">
-                            <span class="inline-flex items-center gap-1">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.shift === 'sabah' ? t('morning') : t('evening')}</span>
-                            <span class="mx-2">•</span>
-                            <span>👤 ${r.user}</span>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 hover:bg-green-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">📱</button>
-                        <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">📊</button>
-                        ${state.user.isAdmin ? `<button onclick="deleteReport(${r.id})" class="bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all">🗑️</button>` : ''}
-                    </div>
-                </div>
-                
-                <div class="space-y-2 mb-4">
-                    ${r.machines.map(m => `
-                        <div class="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm">${m.id}</div>
-                                <span class="text-sm text-gray-600">${m.en}×${m.boy}×${m.kalinlik}</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qp} → ${m.vp}m³</span>
-                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qd} → ${m.vd}m³</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div class="bg-blue-100 rounded-xl p-3 text-center">
-                        <div class="text-xs text-blue-600 font-semibold">${t('poperechny')}</div>
-                        <div class="text-lg font-bold text-blue-800">${r.tqp} ${t('qty')} → ${r.tvp} m³</div>
-                    </div>
-                    <div class="bg-green-100 rounded-xl p-3 text-center">
-                        <div class="text-xs text-green-600 font-semibold">${t('prodolny')}</div>
-                        <div class="text-lg font-bold text-green-800">${r.tqd} ${t('qty')} → ${r.tvd} m³</div>
-                    </div>
-                </div>
-                
-                <div class="bg-indigo-100 rounded-xl p-4 text-center">
-                    <div class="text-sm text-indigo-600 font-semibold">${t('grandTotal')}</div>
-                    <div class="text-2xl font-bold text-indigo-800">${r.gt} m³</div>
-                </div>
-            </div>
-        `).join('');
 
         app.innerHTML = `
             <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50">
@@ -630,19 +442,19 @@
                     <div class="max-w-4xl mx-auto p-4">
                         <div class="flex justify-between items-center flex-wrap gap-3">
                             <div class="flex items-center gap-3">
-                                <button onclick="goBack()" class="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-xl font-medium transition-all">← ${t('back')}</button>
+                                <button onclick="goBack()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl font-medium">← ${t('back')}</button>
                                 <div>
-                                    <h1 class="text-xl font-bold flex items-center gap-2">🔥 ${PROSESLER.find(p=>p.id==='kurutma').name[state.lang]}</h1>
+                                    <h1 class="text-xl font-bold">🔥 ${PROSESLER.find(p=>p.id==='kurutma').name[state.lang]}</h1>
                                     <p class="text-sm text-orange-100">${state.user.name}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="flex bg-white/20 rounded-lg p-1">
-                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded-md transition-all ${state.lang==='tr'?'bg-white text-orange-600 font-bold':''}">🇹🇷</button>
-                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded-md transition-all ${state.lang==='ru'?'bg-white text-orange-600 font-bold':''}">🇷🇺</button>
-                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded-md transition-all ${state.lang==='kk'?'bg-white text-orange-600 font-bold':''}">🇰🇿</button>
+                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded-md ${state.lang==='tr'?'bg-white text-orange-600 font-bold':''}">🇹🇷</button>
+                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded-md ${state.lang==='ru'?'bg-white text-orange-600 font-bold':''}">🇷🇺</button>
+                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded-md ${state.lang==='kk'?'bg-white text-orange-600 font-bold':''}">🇰🇿</button>
                                 </div>
-                                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-medium transition-all">${t('logout')}</button>
+                                <button onclick="doLogout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-medium">${t('logout')}</button>
                             </div>
                         </div>
                     </div>
@@ -652,21 +464,17 @@
                     <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="text-emerald-600 text-lg">📐</span>
-                            <span class="text-sm text-emerald-700">
-                                <strong>${t('standard')}:</strong> ${STANDART_OLCULER.en} × ${STANDART_OLCULER.boy} × ${STANDART_OLCULER.kalinlik} mm
-                            </span>
+                            <span class="text-sm text-emerald-700"><strong>${t('standard')}:</strong> ${STANDART_OLCULER.en} × ${STANDART_OLCULER.boy} × ${STANDART_OLCULER.kalinlik} mm</span>
                         </div>
-                        <button onclick="resetAllToStandard()" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-all font-medium">
-                            ↺ Tümünü Sıfırla
-                        </button>
+                        <button onclick="resetAllToStandard()" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg">↺ Tümünü Sıfırla</button>
                     </div>
                 </div>
 
                 <div class="max-w-4xl mx-auto p-4">
                     <div class="flex gap-2 mb-4 bg-white rounded-2xl p-2 shadow">
-                        <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='giris'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📝 ${t('dataEntry')}</button>
-                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')}</button>
-                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.tab==='ayarlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">⚙️ ${t('settings')}</button>` : ''}
+                        <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='giris'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📝 ${t('dataEntry')}</button>
+                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')}</button>
+                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='ayarlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">⚙️ ${t('settings')}</button>` : ''}
                     </div>
 
                     ${state.tab === 'giris' ? `
@@ -675,40 +483,94 @@
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">${t('shift')}</label>
                                     <div class="flex gap-2">
-                                        <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.shift==='sabah'?'bg-amber-400 text-white shadow-lg':'bg-gray-100 text-gray-600 hover:bg-gray-200'}">🌅 ${t('morning')}</button>
-                                        <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold transition-all ${state.shift==='aksam'?'bg-indigo-500 text-white shadow-lg':'bg-gray-100 text-gray-600 hover:bg-gray-200'}">🌙 ${t('evening')}</button>
+                                        <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='sabah'?'bg-amber-400 text-white shadow-lg':'bg-gray-100 text-gray-600'}">🌅 ${t('morning')}</button>
+                                        <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='aksam'?'bg-indigo-500 text-white shadow-lg':'bg-gray-100 text-gray-600'}">🌙 ${t('evening')}</button>
                                     </div>
                                 </div>
                                 ${state.user.isAdmin ? `
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">📅 ${t('reportDate')}</label>
-                                        <input type="date" value="${state.date}" onchange="setDate(this.value)" class="input-field w-full p-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500">
+                                        <input type="date" value="${state.date}" onchange="setDate(this.value)" class="input-field w-full p-3 border-2 border-gray-200 rounded-xl">
                                     </div>
                                 ` : ''}
                             </div>
                         </div>
                         
-                        ${machinesHTML}
+                        ${state.machines.map(m => {
+                            const isStd = isStandard(m);
+                            return `
+                            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4 border-l-4 border-orange-400">
+                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
+                                        <span class="font-bold text-lg text-gray-800">${t('machine')} ${m.id}</span>
+                                        ${isStd ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-semibold">✓ ${t('standard')}</span>` : `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-semibold">⚡ Özel</span>`}
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs text-gray-500 mb-1">${t('volume')}</div>
+                                        <div class="flex gap-2">
+                                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'p')} m³</span>
+                                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'d')} m³</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase">📐 ${t('dimensions')} (${t('mm')})</div>
+                                        ${!isStd ? `<button onclick="resetToStandard(${m.id})" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg">↺ ${t('standard')}</button>` : ''}
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-xs text-gray-600 mb-1">${t('width')}</label>
+                                            <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="numeric">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-600 mb-1">${t('length')}</label>
+                                            <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="numeric">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-600 mb-1">${t('thickness')}</label>
+                                            <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="decimal" step="0.1">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="text-xs font-semibold text-gray-500 uppercase mb-2">📦 ${t('quantities')}</div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
+                                            <label class="block text-xs text-blue-700 font-bold mb-1">${t('poperechny')}</label>
+                                            <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" class="input-field w-full p-3 bg-white border-2 border-blue-300 rounded-xl text-center font-bold text-blue-700 text-lg" inputmode="numeric">
+                                        </div>
+                                        <div class="bg-green-50 rounded-xl p-3 border-2 border-green-200">
+                                            <label class="block text-xs text-green-700 font-bold mb-1">${t('prodolny')}</label>
+                                            <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" class="input-field w-full p-3 bg-white border-2 border-green-300 rounded-xl text-center font-bold text-green-700 text-lg" inputmode="numeric">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }).join('')}
                         
                         <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-5 text-white">
                             <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div class="bg-white/20 backdrop-blur rounded-xl p-4 text-center">
+                                <div class="bg-white/20 rounded-xl p-4 text-center">
                                     <div class="text-sm opacity-80">${t('poperechny')}</div>
                                     <div class="text-2xl font-bold mt-1">${totalVol('p')} m³</div>
                                     <div class="text-sm opacity-80 mt-1">${totalQty('p')} ${t('qty')}</div>
                                 </div>
-                                <div class="bg-white/20 backdrop-blur rounded-xl p-4 text-center">
+                                <div class="bg-white/20 rounded-xl p-4 text-center">
                                     <div class="text-sm opacity-80">${t('prodolny')}</div>
                                     <div class="text-2xl font-bold mt-1">${totalVol('d')} m³</div>
                                     <div class="text-sm opacity-80 mt-1">${totalQty('d')} ${t('qty')}</div>
                                 </div>
                             </div>
-                            <div class="bg-white/30 backdrop-blur rounded-xl p-4 text-center mb-4">
+                            <div class="bg-white/30 rounded-xl p-4 text-center mb-4">
                                 <div class="text-lg opacity-90">${t('grandTotal')}</div>
                                 <div class="text-4xl font-bold mt-1">${grandTotal()} m³</div>
                                 <div class="text-sm opacity-80 mt-1">${totalQty('p') + totalQty('d')} ${t('qty')}</div>
                             </div>
-                            <button onclick="saveReport()" id="saveBtn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl">💾 ${t('save')}</button>
+                            <button onclick="doSaveReport()" id="saveBtn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">💾 ${t('save')}</button>
                         </div>
                     ` : ''}
 
@@ -717,25 +579,81 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-1">${t('startDate')}</label>
-                                    <input type="date" value="${state.filterStart}" onchange="setFilterStart(this.value)" class="w-full p-3 border-2 border-gray-200 rounded-xl">
+                                    <input type="date" value="${state.filterStart}" onchange="state.filterStart=this.value" class="w-full p-3 border-2 border-gray-200 rounded-xl">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-1">${t('endDate')}</label>
-                                    <input type="date" value="${state.filterEnd}" onchange="setFilterEnd(this.value)" class="w-full p-3 border-2 border-gray-200 rounded-xl">
+                                    <input type="date" value="${state.filterEnd}" onchange="state.filterEnd=this.value" class="w-full p-3 border-2 border-gray-200 rounded-xl">
                                 </div>
                                 <div class="flex items-end gap-2">
-                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold transition-all">${t('filter')}</button>
-                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-xl font-semibold transition-all">${t('showAll')}</button>` : ''}
+                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold">${t('filter')}</button>
+                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-xl font-semibold">${t('showAll')}</button>` : ''}
                                 </div>
                             </div>
                             <div class="flex gap-2 mt-3">
-                                <button onclick="loadReports()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-all">🔄 Yenile</button>
-                                ${filteredReports.length > 0 ? `
-                                    <button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-all">📊 ${t('exportExcel')} (${filteredReports.length})</button>
-                                ` : ''}
+                                <button onclick="doLoadReports()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">🔄 ${t('refresh')}</button>
+                                ${filteredReports.length > 0 ? `<button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold">📊 ${t('exportExcel')}</button>` : ''}
                             </div>
                         </div>
-                        ${reportsHTML}
+                        
+                        ${state.loading ? `
+                            <div class="bg-white rounded-2xl shadow p-8 text-center">
+                                <div class="spinner mx-auto mb-4" style="border-top-color: #4F46E5; width: 40px; height: 40px;"></div>
+                                <p class="text-gray-500">${t('loading')}</p>
+                            </div>
+                        ` : filteredReports.length === 0 ? `
+                            <div class="bg-white rounded-2xl shadow p-8 text-center">
+                                <div class="text-6xl mb-4">📋</div>
+                                <p class="text-gray-500">${t('noReports')}</p>
+                            </div>
+                        ` : filteredReports.map(r => `
+                            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
+                                <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
+                                    <div>
+                                        <div class="font-bold text-lg text-gray-800">${r.date}</div>
+                                        <div class="text-sm text-gray-500 mt-1">
+                                            ${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.shift === 'sabah' ? t('morning') : t('evening')} • 👤 ${r.user}
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 hover:bg-green-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">📱</button>
+                                        <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">📊</button>
+                                        ${state.user.isAdmin ? `<button onclick="doDeleteReport(${r.id})" class="bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">🗑️</button>` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    ${r.machines.map(m => `
+                                        <div class="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                                            <div class="flex items-center gap-3">
+                                                <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm">${m.id}</div>
+                                                <span class="text-sm text-gray-600">${m.en}×${m.boy}×${m.kalinlik}</span>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qp} → ${m.vp}m³</span>
+                                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qd} → ${m.vd}m³</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div class="bg-blue-100 rounded-xl p-3 text-center">
+                                        <div class="text-xs text-blue-600 font-semibold">${t('poperechny')}</div>
+                                        <div class="text-lg font-bold text-blue-800">${r.tqp} ${t('qty')} → ${r.tvp} m³</div>
+                                    </div>
+                                    <div class="bg-green-100 rounded-xl p-3 text-center">
+                                        <div class="text-xs text-green-600 font-semibold">${t('prodolny')}</div>
+                                        <div class="text-lg font-bold text-green-800">${r.tqd} ${t('qty')} → ${r.tvd} m³</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-indigo-100 rounded-xl p-4 text-center">
+                                    <div class="text-sm text-indigo-600 font-semibold">${t('grandTotal')}</div>
+                                    <div class="text-2xl font-bold text-indigo-800">${r.gt} m³</div>
+                                </div>
+                            </div>
+                        `).join('')}
                     ` : ''}
 
                     ${state.tab === 'ayarlar' && state.user.isAdmin ? `
@@ -745,21 +663,19 @@
                                 <p class="text-gray-600">${t('reports')}: <span class="font-bold text-2xl text-indigo-600">${state.reports.length}</span></p>
                                 <p class="text-sm text-gray-500 mt-2">☁️ Veriler bulutta saklanıyor</p>
                             </div>
-                            <button onclick="deleteAllReports()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold transition-all">🗑️ ${t('deleteAll')}</button>
+                            <button onclick="doDeleteAll()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold">🗑️ ${t('deleteAll')}</button>
                         </div>
                     ` : ''}
                 </div>
             </div>
             
-            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl hidden transform transition-all">
-                ✅ ${t('saved')}
-            </div>
+            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl hidden">✅ ${t('saved')}</div>
         `;
     }
 
-    // GLOBAL FUNCTIONS
+    // ==================== GLOBAL FUNCTIONS ====================
     window.changeLang = (l) => { state.lang = l; localStorage.setItem('lang', l); render(); };
-    window.login = async () => {
+    window.doLogin = () => {
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
         const user = USERS[u];
@@ -768,44 +684,19 @@
             document.getElementById('loginError').classList.remove('hidden'); 
             return; 
         }
-        state.user = user; 
-        state.loggedIn = true; 
-        render();
+        state.user = user; state.loggedIn = true; render();
     };
-    window.logout = () => { state.loggedIn = false; state.user = null; state.activeProses = null; state.tab = 'giris'; render(); };
-    window.selectProses = async (id) => { 
-        state.activeProses = id; 
-        state.tab = 'giris'; 
-        render();
-        await loadReports();
-    };
+    window.doLogout = () => { state.loggedIn = false; state.user = null; state.activeProses = null; state.tab = 'giris'; render(); };
+    window.selectProses = async (id) => { state.activeProses = id; state.tab = 'giris'; render(); await loadReports(); };
     window.goBack = () => { state.activeProses = null; render(); };
     window.setTab = (t) => { state.tab = t; render(); };
     window.setShift = (s) => { state.shift = s; render(); };
     window.setDate = (d) => { state.date = d; render(); };
     window.updateMachine = (id, field, val) => { state.machines = state.machines.map(m => m.id === id ? {...m, [field]: val} : m); render(); };
+    window.resetToStandard = (id) => { state.machines = state.machines.map(m => m.id === id ? {...m, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik} : m); render(); };
+    window.resetAllToStandard = () => { state.machines = state.machines.map(m => ({...m, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik})); render(); };
     
-    window.resetToStandard = (id) => { 
-        state.machines = state.machines.map(m => m.id === id ? {
-            ...m, 
-            en: STANDART_OLCULER.en, 
-            boy: STANDART_OLCULER.boy, 
-            kalinlik: STANDART_OLCULER.kalinlik
-        } : m); 
-        render(); 
-    };
-    
-    window.resetAllToStandard = () => { 
-        state.machines = state.machines.map(m => ({
-            ...m, 
-            en: STANDART_OLCULER.en, 
-            boy: STANDART_OLCULER.boy, 
-            kalinlik: STANDART_OLCULER.kalinlik
-        })); 
-        render(); 
-    };
-    
-    window.saveReport = async () => {
+    window.doSaveReport = async () => {
         const btn = document.getElementById('saveBtn');
         btn.innerHTML = `<span class="spinner"></span> ${t('saving')}`;
         btn.disabled = true;
@@ -815,51 +706,25 @@
             shift: state.shift, 
             user: state.user.name, 
             machines: state.machines.map(m => ({...m, vp: calcVol(m,'p'), vd: calcVol(m,'d')})), 
-            tvp: totalVol('p'), 
-            tvd: totalVol('d'), 
-            tqp: totalQty('p'), 
-            tqd: totalQty('d'), 
-            gt: grandTotal() 
+            tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal() 
         };
         
-        await saveReportToSupabase(report);
+        await saveReport(report);
         await loadReports();
         
-        state.machines = state.machines.map(m => ({
-            ...m,
-            en: STANDART_OLCULER.en,
-            boy: STANDART_OLCULER.boy,
-            kalinlik: STANDART_OLCULER.kalinlik,
-            qp: '',
-            qd: ''
-        }));
-        
+        state.machines = createDefaultMachines();
         render(); 
         document.getElementById('successMsg').classList.remove('hidden'); 
         setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
     };
     
-    window.deleteReport = async (id) => { 
-        if (confirm(t('confirmDelete'))) {
-            await deleteReportFromSupabase(id);
-            await loadReports();
-        }
-    };
-    
-    window.deleteAllReports = async () => { 
-        if (confirm(t('confirmDelete'))) { 
-            await deleteAllReportsFromSupabase();
-            await loadReports();
-        } 
-    };
-    
-    window.setFilterStart = (d) => { state.filterStart = d; };
-    window.setFilterEnd = (d) => { state.filterEnd = d; };
+    window.doDeleteReport = async (id) => { if (confirm(t('confirmDelete'))) { await deleteReport(id); await loadReports(); } };
+    window.doDeleteAll = async () => { if (confirm(t('confirmDelete'))) { await deleteAllReports(); await loadReports(); } };
+    window.doLoadReports = loadReports;
     window.applyFilter = () => { state.filtering = true; render(); };
     window.clearFilter = () => { state.filterStart = ''; state.filterEnd = ''; state.filtering = false; render(); };
     window.exportExcel = exportExcel;
     window.shareWhatsApp = shareWhatsApp;
-    window.loadReports = loadReports;
 
     render();
     </script>
