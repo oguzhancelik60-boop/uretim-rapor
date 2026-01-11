@@ -2,7 +2,7 @@
   "name": "Üretim Rapor Sistemi",
   "short_name": "Üretim Rapor",
   "description": "Fabrika üretim takip ve raporlama sistemi",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#4F46E5",
   "theme_color": "#4F46E5",
@@ -20,7 +20,5 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["business", "productivity"],
-  "lang": "tr"
+  ]
 }
