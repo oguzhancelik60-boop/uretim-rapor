@@ -19,6 +19,13 @@
     <div id="app"></div>
     
     <script>
+    // STANDART ÖLÇÜLER - Kurutma için varsayılan değerler
+    const STANDART_OLCULER = {
+        en: '1250',
+        boy: '2500',
+        kalinlik: '1.5'
+    };
+
     const USERS = {
         'yonetici': { password: 'admin123', role: 'Yönetici', name: 'Yönetici', isAdmin: true, permissions: ['agac_kabul','papel_soyma','kurutma','papel_ekleme','tutkallama','depo'] },
         'ali': { password: 'ali123', role: 'Operatör', name: 'Ali', isAdmin: false, permissions: ['kurutma'] },
@@ -35,6 +42,16 @@
         { id: 'depo', name: { tr: 'Depo', ru: 'Склад', kk: 'Қойма' }, icon: '📦', color: 'bg-indigo-500', active: false }
     ];
 
+    // Varsayılan ölçülerle makine oluştur
+    function createDefaultMachines() {
+        return [
+            { id: 1, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
+            { id: 2, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
+            { id: 3, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
+            { id: 4, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' }
+        ];
+    }
+
     let state = {
         lang: localStorage.getItem('lang') || 'tr',
         loggedIn: false,
@@ -43,12 +60,7 @@
         tab: 'giris',
         shift: 'sabah',
         date: new Date().toISOString().split('T')[0],
-        machines: [
-            { id: 1, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
-            { id: 2, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
-            { id: 3, en: '', boy: '', kalinlik: '', qp: '', qd: '' },
-            { id: 4, en: '', boy: '', kalinlik: '', qp: '', qd: '' }
-        ],
+        machines: createDefaultMachines(),
         reports: JSON.parse(localStorage.getItem('reports') || '[]'),
         filterStart: '',
         filterEnd: '',
@@ -56,9 +68,9 @@
     };
 
     const T = {
-        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', fullAccess: 'Tüm erişim', onlyDrying: 'Sadece Kurutma', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları' },
-        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', fullAccess: 'Полный доступ', onlyDrying: 'Только Сушка', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество' },
-        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', fullAccess: 'Толық қол жеткізу', onlyDrying: 'Тек Кептіру', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны' }
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', fullAccess: 'Tüm erişim', onlyDrying: 'Sadece Kurutma', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', fullAccess: 'Полный доступ', onlyDrying: 'Только Сушка', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', fullAccess: 'Толық қол жеткізу', onlyDrying: 'Тек Кептіру', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт' }
     };
 
     const t = (key) => T[state.lang][key] || key;
@@ -103,6 +115,13 @@
         msg += `━━━━━━━━━━━━━━━\n`;
         msg += `📊 *${t('grandTotal')}: ${r.gt} m³*`;
         window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    // Ölçülerin standart olup olmadığını kontrol et
+    function isStandard(m) {
+        return m.en === STANDART_OLCULER.en && 
+               m.boy === STANDART_OLCULER.boy && 
+               m.kalinlik === STANDART_OLCULER.kalinlik;
     }
 
     function render() {
@@ -203,13 +222,16 @@
             return rt >= start && rt <= end;
         }) : state.reports;
 
-        let machinesHTML = state.machines.map(m => `
+        let machinesHTML = state.machines.map(m => {
+            const isStd = isStandard(m);
+            return `
             <div class="bg-white rounded-2xl shadow-lg p-5 mb-4 border-l-4 border-orange-400">
                 <!-- Makine Başlık -->
                 <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
                     <div class="flex items-center gap-3">
                         <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
                         <span class="font-bold text-lg text-gray-800">${t('machine')} ${m.id}</span>
+                        ${isStd ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-semibold">✓ ${t('standard')}</span>` : `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-semibold">⚡ Özel</span>`}
                     </div>
                     <div class="text-right">
                         <div class="text-xs text-gray-500 mb-1">${t('volume')}</div>
@@ -222,25 +244,28 @@
                 
                 <!-- Ölçüler Bölümü -->
                 <div class="mb-4">
-                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">📐 ${t('dimensions')} (${t('mm')})</div>
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider">📐 ${t('dimensions')} (${t('mm')})</div>
+                        ${!isStd ? `<button onclick="resetToStandard(${m.id})" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg transition-all">↺ ${t('standard')}</button>` : ''}
+                    </div>
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">${t('width')}</label>
                             <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" 
-                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="numeric" placeholder="0">
+                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="numeric" placeholder="1250">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">${t('length')}</label>
                             <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" 
-                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="numeric" placeholder="0">
+                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="numeric" placeholder="2500">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">${t('thickness')}</label>
                             <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" 
-                                   class="input-field w-full p-3 border-2 border-gray-200 rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
-                                   inputmode="decimal" placeholder="0">
+                                   class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" 
+                                   inputmode="decimal" placeholder="1.5" step="0.1">
                         </div>
                     </div>
                 </div>
@@ -264,7 +289,7 @@
                     </div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         let reportsHTML = filteredReports.length === 0 ? `
             <div class="bg-white rounded-2xl shadow p-8 text-center">
@@ -344,6 +369,21 @@
                                 <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-medium transition-all">${t('logout')}</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Standart Ölçü Bilgisi -->
+                <div class="max-w-4xl mx-auto px-4 pt-4">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-emerald-600 text-lg">📐</span>
+                            <span class="text-sm text-emerald-700">
+                                <strong>${t('standard')}:</strong> ${STANDART_OLCULER.en} × ${STANDART_OLCULER.boy} × ${STANDART_OLCULER.kalinlik} mm
+                            </span>
+                        </div>
+                        <button onclick="resetAllToStandard()" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-all font-medium">
+                            ↺ Tümünü Sıfırla
+                        </button>
                     </div>
                 </div>
 
@@ -464,10 +504,41 @@
     window.setShift = (s) => { state.shift = s; render(); };
     window.setDate = (d) => { state.date = d; render(); };
     window.updateMachine = (id, field, val) => { state.machines = state.machines.map(m => m.id === id ? {...m, [field]: val} : m); render(); };
+    
+    // Tek makineyi standarta sıfırla
+    window.resetToStandard = (id) => { 
+        state.machines = state.machines.map(m => m.id === id ? {
+            ...m, 
+            en: STANDART_OLCULER.en, 
+            boy: STANDART_OLCULER.boy, 
+            kalinlik: STANDART_OLCULER.kalinlik
+        } : m); 
+        render(); 
+    };
+    
+    // Tüm makineleri standarta sıfırla
+    window.resetAllToStandard = () => { 
+        state.machines = state.machines.map(m => ({
+            ...m, 
+            en: STANDART_OLCULER.en, 
+            boy: STANDART_OLCULER.boy, 
+            kalinlik: STANDART_OLCULER.kalinlik
+        })); 
+        render(); 
+    };
+    
     window.saveReport = () => {
         const r = { id: Date.now(), date: state.date + ' ' + new Date().toTimeString().slice(0,5), ts: new Date(state.date).getTime(), shift: state.shift, user: state.user.name, machines: state.machines.map(m => ({...m, vp: calcVol(m,'p'), vd: calcVol(m,'d')})), tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal() };
         state.reports.push(r); localStorage.setItem('reports', JSON.stringify(state.reports));
-        state.machines = [{ id: 1, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 2, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 3, en: '', boy: '', kalinlik: '', qp: '', qd: '' },{ id: 4, en: '', boy: '', kalinlik: '', qp: '', qd: '' }];
+        // Kayıttan sonra sadece adetleri sıfırla, ölçüler standart kalsın
+        state.machines = state.machines.map(m => ({
+            ...m,
+            en: STANDART_OLCULER.en,
+            boy: STANDART_OLCULER.boy,
+            kalinlik: STANDART_OLCULER.kalinlik,
+            qp: '',
+            qd: ''
+        }));
         render(); 
         document.getElementById('successMsg').classList.remove('hidden'); 
         setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
