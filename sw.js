@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uretim-rapor-v1';
+const CACHE_NAME = 'uretim-rapor-v2';
 const urlsToCache = [
   '/',
   '/index.html'
@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
-  // Hemen aktif ol
+  // Hemen aktif ol - eski SW'yi beklemeden
   self.skipWaiting();
 });
 
@@ -35,40 +35,24 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch isteklerini yakala
+// Fetch isteklerini yakala - Network first, cache fallback
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Cache'de varsa onu döndür
-        if (response) {
-          return response;
-        }
-        
-        // Yoksa ağdan al ve cache'e ekle
-        return fetch(event.request).then((response) => {
-          // Geçersiz yanıtları cache'leme
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Yanıtı klonla (stream sadece bir kez okunabilir)
+        // Ağdan başarılı yanıt geldi, cache'e kaydet
+        if (response && response.status === 200) {
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
             });
-
-          return response;
-        });
+        }
+        return response;
       })
       .catch(() => {
-        // Offline ve cache'de yoksa
-        return new Response('Offline - Lütfen internet bağlantınızı kontrol edin', {
-          status: 503,
-          statusText: 'Service Unavailable'
-        });
+        // Ağ başarısız, cache'den dene
+        return caches.match(event.request);
       })
   );
 });
