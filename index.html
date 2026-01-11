@@ -59,6 +59,22 @@
         }
         .offline-badge.show { display: flex; align-items: center; gap: 8px; }
         
+        .pending-badge {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #F59E0B;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1001;
+            display: none;
+            cursor: pointer;
+        }
+        .pending-badge.show { display: flex; align-items: center; gap: 6px; }
+        
         .spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-top: 3px solid white;
@@ -94,6 +110,10 @@
         <span>📴</span> Çevrimdışı Mod
     </div>
     
+    <div id="pendingBadge" class="pending-badge" onclick="syncPendingReports()">
+        <span>⏳</span> <span id="pendingCount">0</span> bekleyen rapor
+    </div>
+    
     <div id="syncBadge" class="sync-badge">
         <span>☁️</span> Senkronize
     </div>
@@ -122,6 +142,92 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4eHpua2liY295YWVtbHFtY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTk4MzMsImV4cCI6MjA4MzY5NTgzM30.AqAud6Mo6x1sy7FB_at8f2BnTZSVsytXHXC_b5WX0yQ';
     
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ==================== OFFLINE SYNC ====================
+    const PENDING_KEY = 'pendingReports';
+    
+    function getPendingReports() {
+        return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+    }
+    
+    function savePendingReport(report) {
+        const pending = getPendingReports();
+        pending.push({ ...report, pendingId: Date.now() });
+        localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+        updatePendingBadge();
+    }
+    
+    function removePendingReport(pendingId) {
+        const pending = getPendingReports().filter(r => r.pendingId !== pendingId);
+        localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+        updatePendingBadge();
+    }
+    
+    function updatePendingBadge() {
+        const pending = getPendingReports();
+        const badge = document.getElementById('pendingBadge');
+        const count = document.getElementById('pendingCount');
+        if (pending.length > 0) {
+            badge.classList.add('show');
+            count.textContent = pending.length;
+        } else {
+            badge.classList.remove('show');
+        }
+    }
+    
+    async function syncPendingReports() {
+        if (!navigator.onLine) {
+            alert('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.');
+            return;
+        }
+        
+        const pending = getPendingReports();
+        if (pending.length === 0) return;
+        
+        let syncedCount = 0;
+        
+        for (const report of pending) {
+            try {
+                const { error } = await db.from('reports').insert([{
+                    date: report.date,
+                    shift: report.shift,
+                    user_name: report.user,
+                    machines: report.machines,
+                    tvp: report.tvp,
+                    tvd: report.tvd,
+                    tqp: report.tqp,
+                    tqd: report.tqd,
+                    gt: report.gt
+                }]);
+                
+                if (!error) {
+                    removePendingReport(report.pendingId);
+                    syncedCount++;
+                }
+            } catch (err) {
+                console.error('Senkron hatası:', err);
+            }
+        }
+        
+        if (syncedCount > 0) {
+            showSyncBadge();
+            await loadReports();
+            alert(`✅ ${syncedCount} rapor senkronize edildi!`);
+        }
+    }
+    
+    // Online olunca otomatik senkron
+    window.addEventListener('online', () => {
+        updateOnlineStatus();
+        const pending = getPendingReports();
+        if (pending.length > 0) {
+            setTimeout(() => {
+                syncPendingReports();
+            }, 2000); // 2 saniye bekle, bağlantı stabilize olsun
+        }
+    });
+    
+    window.addEventListener('offline', updateOnlineStatus);
     
     // ==================== PWA SETUP ====================
     let deferredPrompt;
@@ -168,9 +274,8 @@
         }
     }
     
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
+    updatePendingBadge();
     
     // ==================== APP STATE ====================
     const STANDART_OLCULER = { en: '1250', boy: '2500', kalinlik: '1.5' };
@@ -217,9 +322,9 @@
     };
 
     const T = {
-        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile' },
-        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', refresh: 'Обновить' },
-        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', refresh: 'Жаңарту' }
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', savedOffline: 'Rapor kaydedildi! (Çevrimdışı - internet gelince senkronlanacak)', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile', pendingSync: 'Bekleyen', syncNow: 'Şimdi Senkronla' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', savedOffline: 'Сохранено! (Офлайн - синхронизируется при подключении)', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', refresh: 'Обновить', pendingSync: 'Ожидающие', syncNow: 'Синхронизировать' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', savedOffline: 'Сақталды! (Офлайн - қосылғанда синхрондалады)', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', refresh: 'Жаңарту', pendingSync: 'Күтуде', syncNow: 'Синхрондау' }
     };
 
     const t = (key) => T[state.lang][key] || key;
@@ -267,14 +372,14 @@
             showSyncBadge();
         } catch (error) {
             console.error('Yükleme hatası:', error);
-            state.reports = JSON.parse(localStorage.getItem('reports') || '[]');
+            state.reports = [];
         }
         
         state.loading = false;
         render();
     }
     
-    async function saveReport(report) {
+    async function saveReportToCloud(report) {
         try {
             const { error } = await db.from('reports').insert([{
                 date: report.date,
@@ -289,7 +394,6 @@
             }]);
             
             if (error) throw error;
-            showSyncBadge();
             return true;
         } catch (error) {
             console.error('Kaydetme hatası:', error);
@@ -321,6 +425,15 @@
         const badge = document.getElementById('syncBadge');
         badge.classList.add('show');
         setTimeout(() => badge.classList.remove('show'), 2000);
+    }
+    
+    function showSuccessMessage(isOffline) {
+        const msg = document.getElementById('successMsg');
+        msg.innerHTML = isOffline ? `⏳ ${t('savedOffline')}` : `✅ ${t('saved')}`;
+        msg.className = isOffline 
+            ? 'fixed top-16 right-4 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-2xl'
+            : 'fixed top-16 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl';
+        setTimeout(() => msg.className = 'hidden', 4000);
     }
 
     function exportExcel(rpts) {
@@ -435,6 +548,8 @@
             const d = r.date.split(' ')[0];
             return (!state.filterStart || d >= state.filterStart) && (!state.filterEnd || d <= state.filterEnd);
         }) : state.reports;
+        
+        const pendingReports = getPendingReports();
 
         app.innerHTML = `
             <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50">
@@ -473,7 +588,7 @@
                 <div class="max-w-4xl mx-auto p-4">
                     <div class="flex gap-2 mb-4 bg-white rounded-2xl p-2 shadow">
                         <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='giris'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📝 ${t('dataEntry')}</button>
-                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')}</button>
+                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')} ${pendingReports.length > 0 ? `<span class="bg-amber-400 text-white text-xs px-2 py-0.5 rounded-full ml-1">${pendingReports.length}</span>` : ''}</button>
                         ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='ayarlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">⚙️ ${t('settings')}</button>` : ''}
                     </div>
 
@@ -575,6 +690,21 @@
                     ` : ''}
 
                     ${state.tab === 'raporlar' ? `
+                        ${pendingReports.length > 0 ? `
+                            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl">⏳</span>
+                                        <div>
+                                            <p class="font-bold text-amber-800">${pendingReports.length} ${t('pendingSync')}</p>
+                                            <p class="text-sm text-amber-600">İnternet bağlantısı bekleniyor</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="syncPendingReports()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-semibold">${t('syncNow')}</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    
                         <div class="bg-white rounded-2xl shadow-lg p-4 mb-4">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div>
@@ -669,7 +799,7 @@
                 </div>
             </div>
             
-            <div id="successMsg" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl hidden">✅ ${t('saved')}</div>
+            <div id="successMsg" class="hidden"></div>
         `;
     }
 
@@ -709,13 +839,24 @@
             tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal() 
         };
         
-        await saveReport(report);
-        await loadReports();
+        let savedToCloud = false;
+        
+        if (navigator.onLine) {
+            savedToCloud = await saveReportToCloud(report);
+            if (savedToCloud) {
+                showSyncBadge();
+                await loadReports();
+            }
+        }
+        
+        if (!savedToCloud) {
+            // Offline veya hata - yerel kaydet
+            savePendingReport(report);
+        }
         
         state.machines = createDefaultMachines();
-        render(); 
-        document.getElementById('successMsg').classList.remove('hidden'); 
-        setTimeout(() => document.getElementById('successMsg').classList.add('hidden'), 3000);
+        render();
+        showSuccessMessage(!savedToCloud);
     };
     
     window.doDeleteReport = async (id) => { if (confirm(t('confirmDelete'))) { await deleteReport(id); await loadReports(); } };
@@ -725,6 +866,7 @@
     window.clearFilter = () => { state.filterStart = ''; state.filterEnd = ''; state.filtering = false; render(); };
     window.exportExcel = exportExcel;
     window.shareWhatsApp = shareWhatsApp;
+    window.syncPendingReports = syncPendingReports;
 
     render();
     </script>
