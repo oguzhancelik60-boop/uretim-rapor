@@ -4,16 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4F46E5">
-    <meta name="description" content="Fabrika üretim takip ve raporlama sistemi">
     <title>Üretim Rapor Sistemi</title>
-    
-    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Üretim Rapor">
-    
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,286 +15,90 @@
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
         .input-field { font-size: 16px !important; }
-        
-        .install-banner {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-            color: white;
-            padding: 16px 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(79, 70, 229, 0.4);
-            z-index: 1000;
-            animation: slideUp 0.5s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .offline-badge {
-            display: none;
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #EF4444;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            z-index: 1001;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .offline-badge { display: none; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #EF4444; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; z-index: 1001; }
         .offline-badge.show { display: flex; align-items: center; gap: 8px; }
-        
-        .pending-badge {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: #F59E0B;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            z-index: 1001;
-            display: none;
-            cursor: pointer;
-        }
+        .pending-badge { position: fixed; top: 10px; left: 10px; background: #F59E0B; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1001; display: none; cursor: pointer; }
         .pending-badge.show { display: flex; align-items: center; gap: 6px; }
-        
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .sync-badge {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #10B981;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            z-index: 1001;
-            display: none;
-        }
+        .sync-badge { position: fixed; top: 10px; right: 10px; background: #10B981; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1001; display: none; }
         .sync-badge.show { display: flex; align-items: center; gap: 6px; }
     </style>
 </head>
 <body class="bg-gray-100">
-    <div id="offlineBadge" class="offline-badge">
-        <span>📴</span> Çevrimdışı Mod
-    </div>
-    
-    <div id="pendingBadge" class="pending-badge" onclick="syncPendingReports()">
-        <span>⏳</span> <span id="pendingCount">0</span> bekleyen rapor
-    </div>
-    
-    <div id="syncBadge" class="sync-badge">
-        <span>☁️</span> Senkronize
-    </div>
-    
-    <div id="installBanner" class="install-banner">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="text-3xl">🏭</div>
-                <div>
-                    <div class="font-bold">Uygulamayı Yükle</div>
-                    <div class="text-sm opacity-90">Ana ekrana ekle, offline kullan</div>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="hideInstallBanner()" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all">Sonra</button>
-                <button onclick="installPWA()" class="px-4 py-2 rounded-lg bg-white text-indigo-600 font-bold hover:bg-gray-100 transition-all">Yükle</button>
-            </div>
-        </div>
-    </div>
-
+    <div id="offlineBadge" class="offline-badge"><span>📴</span> Çevrimdışı</div>
+    <div id="pendingBadge" class="pending-badge" onclick="syncPendingReports()"><span>⏳</span> <span id="pendingCount">0</span> bekleyen</div>
+    <div id="syncBadge" class="sync-badge"><span>☁️</span> Senkronize</div>
     <div id="app"></div>
     
     <script>
-    // ==================== SUPABASE CONFIG ====================
+    // ==================== CONFIG ====================
     const SUPABASE_URL = 'https://exxznkibcoyaemlqmcon.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4eHpua2liY295YWVtbHFtY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTk4MzMsImV4cCI6MjA4MzY5NTgzM30.AqAud6Mo6x1sy7FB_at8f2BnTZSVsytXHXC_b5WX0yQ';
+    const CLOUDINARY_CLOUD = 'de8orxjfy';
+    const CLOUDINARY_UPLOAD_PRESET = 'uretim_unsigned';
+    const CLAUDE_API_KEY = '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';
     
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ==================== OFFLINE SYNC ====================
     const PENDING_KEY = 'pendingReports';
-    
-    function getPendingReports() {
-        return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
-    }
-    
-    function savePendingReport(report) {
-        const pending = getPendingReports();
-        pending.push({ ...report, pendingId: Date.now() });
-        localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-        updatePendingBadge();
-    }
-    
-    function removePendingReport(pendingId) {
-        const pending = getPendingReports().filter(r => r.pendingId !== pendingId);
-        localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
-        updatePendingBadge();
-    }
-    
-    function updatePendingBadge() {
-        const pending = getPendingReports();
-        const badge = document.getElementById('pendingBadge');
-        const count = document.getElementById('pendingCount');
-        if (pending.length > 0) {
-            badge.classList.add('show');
-            count.textContent = pending.length;
-        } else {
-            badge.classList.remove('show');
-        }
-    }
+    function getPendingReports() { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); }
+    function savePendingReport(report) { const pending = getPendingReports(); pending.push({ ...report, pendingId: Date.now() }); localStorage.setItem(PENDING_KEY, JSON.stringify(pending)); updatePendingBadge(); }
+    function removePendingReport(pendingId) { const pending = getPendingReports().filter(r => r.pendingId !== pendingId); localStorage.setItem(PENDING_KEY, JSON.stringify(pending)); updatePendingBadge(); }
+    function updatePendingBadge() { const pending = getPendingReports(); const badge = document.getElementById('pendingBadge'); const count = document.getElementById('pendingCount'); if (pending && badge && count) { if (pending.length > 0) { badge.classList.add('show'); count.textContent = pending.length; } else { badge.classList.remove('show'); } } }
     
     async function syncPendingReports() {
-        if (!navigator.onLine) {
-            alert('İnternet bağlantısı yok. Bağlantı gelince tekrar deneyin.');
-            return;
-        }
-        
+        if (!navigator.onLine) { alert('İnternet bağlantısı yok.'); return; }
         const pending = getPendingReports();
         if (pending.length === 0) return;
-        
         let syncedCount = 0;
-        
         for (const report of pending) {
             try {
-                const { error } = await db.from('reports').insert([{
-                    date: report.date,
-                    shift: report.shift,
-                    user_name: report.user,
-                    machines: report.machines,
-                    tvp: report.tvp,
-                    tvd: report.tvd,
-                    tqp: report.tqp,
-                    tqd: report.tqd,
-                    gt: report.gt
+                const { error } = await db.from('reports').insert([{ 
+                    date: report.date, 
+                    shift: report.shift, 
+                    user_name: report.user, 
+                    machines: report.machines, 
+                    tvp: report.tvp, 
+                    tvd: report.tvd, 
+                    tqp: report.tqp, 
+                    tqd: report.tqd, 
+                    gt: report.gt, 
+                    photos: report.photos,
+                    ai_readings: report.ai_readings,
+                    verification_status: report.verification_status,
+                    verification_details: report.verification_details,
+                    warning_logged: false,
+                    corrected_by: null 
                 }]);
-                
-                if (!error) {
-                    removePendingReport(report.pendingId);
-                    syncedCount++;
-                }
-            } catch (err) {
-                console.error('Senkron hatası:', err);
-            }
+                if (!error) { removePendingReport(report.pendingId); syncedCount++; }
+            } catch (err) { console.error('Senkron hatası:', err); }
         }
-        
-        if (syncedCount > 0) {
-            showSyncBadge();
-            await loadReports();
-            alert(`✅ ${syncedCount} rapor senkronize edildi!`);
-        }
+        if (syncedCount > 0) { showSyncBadge(); await loadReports(); alert(`✅ ${syncedCount} rapor senkronize edildi!`); }
     }
     
-    // Online olunca otomatik senkron
-    window.addEventListener('online', () => {
-        updateOnlineStatus();
-        const pending = getPendingReports();
-        if (pending.length > 0) {
-            setTimeout(() => {
-                syncPendingReports();
-            }, 2000); // 2 saniye bekle, bağlantı stabilize olsun
-        }
-    });
-    
+    window.addEventListener('online', () => { updateOnlineStatus(); const pending = getPendingReports(); if (pending.length > 0) { setTimeout(syncPendingReports, 2000); } });
     window.addEventListener('offline', updateOnlineStatus);
     
-    // ==================== PWA SETUP ====================
-    let deferredPrompt;
-    
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then((reg) => console.log('SW registered'))
-                .catch((err) => console.log('SW failed:', err));
-        });
-    }
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        if (!localStorage.getItem('pwaInstallDismissed')) {
-            setTimeout(() => {
-                document.getElementById('installBanner').style.display = 'block';
-            }, 3000);
-        }
-    });
-    
-    window.installPWA = () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choice) => {
-                deferredPrompt = null;
-                document.getElementById('installBanner').style.display = 'none';
-            });
-        }
-    };
-    
-    window.hideInstallBanner = () => {
-        document.getElementById('installBanner').style.display = 'none';
-        localStorage.setItem('pwaInstallDismissed', 'true');
-    };
-    
-    function updateOnlineStatus() {
-        const badge = document.getElementById('offlineBadge');
-        if (!navigator.onLine) {
-            badge.classList.add('show');
-        } else {
-            badge.classList.remove('show');
-        }
-    }
-    
-    updateOnlineStatus();
-    updatePendingBadge();
+    function updateOnlineStatus() { const badge = document.getElementById('offlineBadge'); if (badge) { if (!navigator.onLine) { badge.classList.add('show'); } else { badge.classList.remove('show'); } } }
+    function showSyncBadge() { const badge = document.getElementById('syncBadge'); if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 2000); } }
     
     // ==================== APP STATE ====================
     const STANDART_OLCULER = { en: '1250', boy: '2500', kalinlik: '1.5' };
-
     const USERS = {
-        'yonetici': { password: 'admin123', role: 'Yönetici', name: 'Yönetici', isAdmin: true, permissions: ['agac_kabul','papel_soyma','kurutma','papel_ekleme','tutkallama','depo'] },
+        'yonetici': { password: 'admin123', role: 'Yönetici', name: 'Yönetici', isAdmin: true, permissions: ['kurutma'] },
         'ali': { password: 'ali123', role: 'Operatör', name: 'Ali', isAdmin: false, permissions: ['kurutma'] },
-        'mehmet': { password: 'mehmet123', role: 'Operatör', name: 'Mehmet', isAdmin: false, permissions: ['kurutma','papel_soyma'] },
-        'ayse': { password: 'ayse123', role: 'Operatör', name: 'Ayşe', isAdmin: false, permissions: ['agac_kabul','depo'] }
+        'mehmet': { password: 'mehmet123', role: 'Operatör', name: 'Mehmet', isAdmin: false, permissions: ['kurutma'] },
+        'ayse': { password: 'ayse123', role: 'Operatör', name: 'Ayşe', isAdmin: false, permissions: ['kurutma'] }
     };
-
-    const PROSESLER = [
-        { id: 'agac_kabul', name: { tr: 'Ağaç Kabul', ru: 'Приём Дерева', kk: 'Ағаш қабылдау' }, icon: '🌳', color: 'bg-green-500', active: false },
-        { id: 'papel_soyma', name: { tr: 'Papel Soyma', ru: 'Резка Шпона', kk: 'Қабат кесу' }, icon: '✂️', color: 'bg-yellow-500', active: false },
-        { id: 'kurutma', name: { tr: 'Kurutma', ru: 'Сушка', kk: 'Кептіру' }, icon: '🔥', color: 'bg-orange-500', active: true },
-        { id: 'papel_ekleme', name: { tr: 'Papel Ekleme', ru: 'Добавление Шпона', kk: 'Қабат қосу' }, icon: '➕', color: 'bg-blue-500', active: false },
-        { id: 'tutkallama', name: { tr: 'Tutkallama', ru: 'Склеивание', kk: 'Желімдеу' }, icon: '💧', color: 'bg-purple-500', active: false },
-        { id: 'depo', name: { tr: 'Depo', ru: 'Склад', kk: 'Қойма' }, icon: '📦', color: 'bg-indigo-500', active: false }
-    ];
 
     function createDefaultMachines() {
         return [
-            { id: 1, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
-            { id: 2, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
-            { id: 3, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' },
-            { id: 4, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '' }
+            { id: 1, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '', photo: null, photoPreview: null },
+            { id: 2, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '', photo: null, photoPreview: null },
+            { id: 3, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '', photo: null, photoPreview: null },
+            { id: 4, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik, qp: '', qd: '', photo: null, photoPreview: null }
         ];
     }
 
@@ -309,7 +106,6 @@
         lang: localStorage.getItem('lang') || 'tr',
         loggedIn: false,
         user: null,
-        activeProses: null,
         tab: 'giris',
         shift: 'sabah',
         date: new Date().toISOString().split('T')[0],
@@ -318,18 +114,18 @@
         filterStart: '',
         filterEnd: '',
         filtering: false,
-        loading: false
+        loading: false,
+        saving: false
     };
 
     const T = {
-        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', settings: 'Ayarlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', savedOffline: 'Rapor kaydedildi! (Çevrimdışı - internet gelince senkronlanacak)', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', deleteAll: 'Tümünü Sil', confirmDelete: 'Emin misiniz?', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', back: 'Geri', comingSoon: 'Yakında Aktif', noPermission: 'Yetkiniz Yok', open: 'Giriş Yap', mm: 'mm', dimensions: 'Ölçüler', quantities: 'Papel Sayıları', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile', pendingSync: 'Bekleyen', syncNow: 'Şimdi Senkronla' },
-        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', settings: 'Настройки', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', savedOffline: 'Сохранено! (Офлайн - синхронизируется при подключении)', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', deleteAll: 'Удалить все', confirmDelete: 'Вы уверены?', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата Отчёта', demo: 'Демо пользователи', back: 'Назад', comingSoon: 'Скоро', noPermission: 'Нет доступа', open: 'Открыть', mm: 'мм', dimensions: 'Размеры', quantities: 'Количество', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', refresh: 'Обновить', pendingSync: 'Ожидающие', syncNow: 'Синхронизировать' },
-        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', settings: 'Баптаулар', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', savedOffline: 'Сақталды! (Офлайн - қосылғанда синхрондалады)', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', deleteAll: 'Барлығын жою', confirmDelete: 'Сенімдісіз бе?', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Есеп Күні', demo: 'Демо', back: 'Артқа', comingSoon: 'Жақында', noPermission: 'Рұқсат жоқ', open: 'Ашу', mm: 'мм', dimensions: 'Өлшемдер', quantities: 'Саны', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', refresh: 'Жаңарту', pendingSync: 'Күтуде', syncNow: 'Синхрондау' }
+        tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', mm: 'mm', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile', takePhoto: 'Fotoğraf', verified: 'Doğrulandı', mismatch: 'Uyumsuz', correct: 'Düzelt', warn: 'Uyarı Kaydet', totalSummary: 'Toplam Özet', mismatchCount: 'uyumsuz rapor', operatorData: 'Operatör verisi esas alındı', analyzing: 'AI Analiz Ediyor...' },
+        ru: { title: 'Система Отчётов', login: 'Войти', logout: 'Выход', username: 'Пользователь', password: 'Пароль', welcome: 'Добро пожаловать', dataEntry: 'Ввод Данных', reports: 'Отчёты', shift: 'Смена', morning: 'Утренняя', evening: 'Вечерняя', machine: 'Машина', width: 'Ширина', length: 'Длина', thickness: 'Толщина', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Сохранить', saved: 'Сохранено!', total: 'Итого', grandTotal: 'Общий Объём', volume: 'Объём', qty: 'Кол-во', noReports: 'Нет отчётов', filter: 'Фильтр', showAll: 'Все', startDate: 'Начало', endDate: 'Конец', exportExcel: 'Excel', reportDate: 'Дата', demo: 'Демо', mm: 'мм', standard: 'Стандарт', loading: 'Загрузка...', saving: 'Сохранение...', refresh: 'Обновить', takePhoto: 'Фото', verified: 'Подтверждено', mismatch: 'Несоответствие', correct: 'Исправить', warn: 'Записать', totalSummary: 'Итого', mismatchCount: 'несоответствий', operatorData: 'Данные оператора', analyzing: 'AI Анализирует...' },
+        kk: { title: 'Есеп Жүйесі', login: 'Кіру', logout: 'Шығу', username: 'Пайдаланушы', password: 'Құпия сөз', welcome: 'Қош келдіңіз', dataEntry: 'Деректер', reports: 'Есептер', shift: 'Ауысым', morning: 'Таңғы', evening: 'Кешкі', machine: 'Машина', width: 'Ені', length: 'Ұзындығы', thickness: 'Қалыңдығы', poperechny: 'Көлденең', prodolny: 'Бойлық', save: 'Сақтау', saved: 'Сақталды!', total: 'Жиыны', grandTotal: 'Жалпы Көлем', volume: 'Көлем', qty: 'Саны', noReports: 'Есеп жоқ', filter: 'Сүзу', showAll: 'Барлығы', startDate: 'Басы', endDate: 'Соңы', exportExcel: 'Excel', reportDate: 'Күні', demo: 'Демо', mm: 'мм', standard: 'Стандарт', loading: 'Жүктелуде...', saving: 'Сақталуда...', refresh: 'Жаңарту', takePhoto: 'Фото', verified: 'Расталды', mismatch: 'Сәйкессіздік', correct: 'Түзету', warn: 'Жазу', totalSummary: 'Жиыны', mismatchCount: 'сәйкессіздік', operatorData: 'Оператор деректері', analyzing: 'AI Талдауда...' }
     };
 
     const t = (key) => T[state.lang][key] || key;
-    const hasPermission = (prosesId) => state.user && state.user.permissions.includes(prosesId);
-
+    
     function calcVol(m, type) {
         const en = parseFloat(m.en) || 0;
         const boy = parseFloat(m.boy) || 0;
@@ -343,17 +139,126 @@
     function grandTotal() { return (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3); }
     function isStandard(m) { return m.en === STANDART_OLCULER.en && m.boy === STANDART_OLCULER.boy && m.kalinlik === STANDART_OLCULER.kalinlik; }
 
+    // ==================== CLOUDINARY UPLOAD ====================
+    async function uploadToCloudinary(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            return data.secure_url;
+        } catch (error) {
+            console.error('Cloudinary yükleme hatası:', error);
+            return null;
+        }
+    }
+
+    // ==================== CLAUDE AI ANALYSIS ====================
+    async function analyzeWithClaude(imageUrl) {
+        try {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': CLAUDE_API_KEY,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 256,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            { type: 'image', source: { type: 'url', url: imageUrl } },
+                            { type: 'text', text: `Bu bir fabrika makine ekranının fotoğrafı. "Ürün Sayısı" değerini bul ve sadece sayıyı döndür. Örnek: 4191. Eğer bulamazsan "null" yaz. Sadece sayı veya null yaz, başka bir şey yazma.` }
+                        ]
+                    }]
+                })
+            });
+            
+            const data = await response.json();
+            const text = data.content[0].text.trim();
+            
+            if (text === 'null' || text === '') return null;
+            
+            const num = parseInt(text.replace(/\D/g, ''));
+            return isNaN(num) ? null : num;
+        } catch (error) {
+            console.error('Claude AI hatası:', error);
+            return null;
+        }
+    }
+
+    // ==================== VERIFICATION ====================
+    function verifyMachine(machine, aiReading) {
+        // Fotoğraf veya AI okuması yoksa bilinmiyor
+        if (!machine.photo || aiReading === null) {
+            return { status: 'unknown', expected: null, actual: null, diff: null };
+        }
+        
+        const qp = parseInt(machine.qp) || 0;
+        const qd = parseInt(machine.qd) || 0;
+        
+        // Hangisi doldurulmuş?
+        if (qp > 0 && qd === 0) {
+            // Поперечный doldurulmuş → AI = Поперечный olmalı
+            const diff = Math.abs(aiReading - qp);
+            return {
+                status: diff <= 5 ? 'verified' : 'mismatch',
+                type: 'poperechny',
+                expected: aiReading,
+                actual: qp,
+                diff: diff
+            };
+        } else if (qd > 0 && qp === 0) {
+            // Продольный doldurulmuş → AI × 2 = Продольный olmalı
+            const expected = aiReading * 2;
+            const diff = Math.abs(expected - qd);
+            return {
+                status: diff <= 10 ? 'verified' : 'mismatch',
+                type: 'prodolny',
+                expected: expected,
+                actual: qd,
+                diff: diff
+            };
+        } else if (qp > 0 && qd > 0) {
+            // İkisi de doldurulmuş - bu durumda Поперечный'ı kontrol et
+            const diff = Math.abs(aiReading - qp);
+            return {
+                status: diff <= 5 ? 'verified' : 'mismatch',
+                type: 'poperechny',
+                expected: aiReading,
+                actual: qp,
+                diff: diff
+            };
+        }
+        
+        return { status: 'unknown', expected: null, actual: null, diff: null };
+    }
+
+    function getOverallVerification(verificationDetails) {
+        if (!verificationDetails || verificationDetails.length === 0) return 'unknown';
+        
+        const hasPhoto = verificationDetails.some(v => v.status !== 'unknown');
+        if (!hasPhoto) return 'unknown';
+        
+        const hasMismatch = verificationDetails.some(v => v.status === 'mismatch');
+        return hasMismatch ? 'mismatch' : 'verified';
+    }
+
     // ==================== SUPABASE FUNCTIONS ====================
     async function loadReports() {
         state.loading = true;
         render();
         
         try {
-            const { data, error } = await db
-                .from('reports')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
+            const { data, error } = await db.from('reports').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             
             state.reports = data.map(r => ({
@@ -366,7 +271,13 @@
                 tvd: r.tvd,
                 tqp: r.tqp,
                 tqd: r.tqd,
-                gt: r.gt
+                gt: r.gt,
+                photos: r.photos || {},
+                ai_readings: r.ai_readings || {},
+                verification_status: r.verification_status || 'unknown',
+                verification_details: r.verification_details || [],
+                warning_logged: r.warning_logged || false,
+                corrected_by: r.corrected_by
             }));
             
             showSyncBadge();
@@ -390,9 +301,14 @@
                 tvd: report.tvd,
                 tqp: report.tqp,
                 tqd: report.tqd,
-                gt: report.gt
+                gt: report.gt,
+                photos: report.photos,
+                ai_readings: report.ai_readings,
+                verification_status: report.verification_status,
+                verification_details: report.verification_details,
+                warning_logged: false,
+                corrected_by: null
             }]);
-            
             if (error) throw error;
             return true;
         } catch (error) {
@@ -400,68 +316,111 @@
             return false;
         }
     }
+
+    async function updateReportWarning(id) {
+        try {
+            await db.from('reports').update({ warning_logged: true }).eq('id', id);
+            showSyncBadge();
+            await loadReports();
+        } catch (error) {
+            console.error('Uyarı kayıt hatası:', error);
+        }
+    }
+
+    async function correctReport(id, machineId, newValue, type) {
+        try {
+            const report = state.reports.find(r => r.id === id);
+            if (!report) return;
+            
+            // Makineyi güncelle
+            const updatedMachines = report.machines.map(m => {
+                if (m.id === machineId) {
+                    if (type === 'poperechny') {
+                        return { ...m, qp: newValue, vp: calcVolForCorrection(m, newValue, 'p') };
+                    } else {
+                        return { ...m, qd: newValue, vd: calcVolForCorrection(m, newValue, 'd') };
+                    }
+                }
+                return m;
+            });
+            
+            // Toplamları yeniden hesapla
+            const newTqp = updatedMachines.reduce((sum, m) => sum + (parseInt(m.qp) || 0), 0);
+            const newTqd = updatedMachines.reduce((sum, m) => sum + (parseInt(m.qd) || 0), 0);
+            const newTvp = updatedMachines.reduce((sum, m) => sum + (parseFloat(m.vp) || 0), 0).toFixed(3);
+            const newTvd = updatedMachines.reduce((sum, m) => sum + (parseFloat(m.vd) || 0), 0).toFixed(3);
+            const newGt = (parseFloat(newTvp) + parseFloat(newTvd)).toFixed(3);
+            
+            // Doğrulama detaylarını güncelle
+            const updatedDetails = report.verification_details.map(v => {
+                if (v.machineId === machineId) {
+                    return { ...v, status: 'corrected', actual: newValue };
+                }
+                return v;
+            });
+            
+            await db.from('reports').update({
+                machines: updatedMachines,
+                tqp: newTqp,
+                tqd: newTqd,
+                tvp: newTvp,
+                tvd: newTvd,
+                gt: newGt,
+                verification_status: 'corrected',
+                verification_details: updatedDetails,
+                corrected_by: state.user.name
+            }).eq('id', id);
+            
+            showSyncBadge();
+            await loadReports();
+        } catch (error) {
+            console.error('Düzeltme hatası:', error);
+        }
+    }
+    
+    function calcVolForCorrection(m, qty, type) {
+        const en = parseFloat(m.en) || 0;
+        const boy = parseFloat(m.boy) || 0;
+        const kalinlik = parseFloat(m.kalinlik) || 0;
+        return ((en/1000) * (boy/1000) * (kalinlik/1000) * qty).toFixed(3);
+    }
     
     async function deleteReport(id) {
         try {
-            const { error } = await db.from('reports').delete().eq('id', id);
-            if (error) throw error;
+            await db.from('reports').delete().eq('id', id);
             showSyncBadge();
+            await loadReports();
         } catch (error) {
             console.error('Silme hatası:', error);
         }
     }
-    
-    async function deleteAllReports() {
-        try {
-            const { error } = await db.from('reports').delete().neq('id', 0);
-            if (error) throw error;
-            showSyncBadge();
-        } catch (error) {
-            console.error('Toplu silme hatası:', error);
-        }
-    }
-    
-    function showSyncBadge() {
-        const badge = document.getElementById('syncBadge');
-        badge.classList.add('show');
-        setTimeout(() => badge.classList.remove('show'), 2000);
-    }
-    
-    function showSuccessMessage(isOffline) {
-        const msg = document.getElementById('successMsg');
-        msg.innerHTML = isOffline ? `⏳ ${t('savedOffline')}` : `✅ ${t('saved')}`;
-        msg.className = isOffline 
-            ? 'fixed top-16 right-4 bg-amber-500 text-white px-6 py-3 rounded-xl shadow-2xl'
-            : 'fixed top-16 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl';
-        setTimeout(() => msg.className = 'hidden', 4000);
-    }
 
-    function exportExcel(rpts) {
-        let csv = '\uFEFF' + `Tarih,Vardiya,Kullanıcı,Makine,En,Boy,Kalınlık,Поперечный Adet,Поперечный m³,Продольный Adet,Продольный m³\n`;
-        rpts.forEach(r => {
-            r.machines.forEach(m => { csv += `${r.date},${r.shift},${r.user},Makine ${m.id},${m.en},${m.boy},${m.kalinlik},${m.qp},${m.vp},${m.qd},${m.vd}\n`; });
-            csv += `${r.date},${r.shift},${r.user},TOPLAM,,,,${r.tqp},${r.tvp},${r.tqd},${r.tvd}\n\n`;
+    // ==================== PERIOD TOTALS ====================
+    function calculatePeriodTotals(reports) {
+        let totalPoperechny = 0;
+        let totalProdolny = 0;
+        let totalVolume = 0;
+        let mismatchCount = 0;
+        
+        reports.forEach(r => {
+            totalPoperechny += parseInt(r.tqp) || 0;
+            totalProdolny += parseInt(r.tqd) || 0;
+            totalVolume += parseFloat(r.gt) || 0;
+            if (r.verification_status === 'mismatch') mismatchCount++;
         });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'rapor_' + new Date().toISOString().split('T')[0] + '.csv';
-        link.click();
-    }
-
-    function shareWhatsApp(r) {
-        let msg = `*🏭 ${t('title')}*\n\n📅 ${r.date}\n⏰ ${r.shift === 'sabah' ? t('morning') : t('evening')}\n👤 ${r.user}\n\n`;
-        r.machines.forEach(m => { 
-            msg += `*${t('machine')} ${m.id}*\n📐 ${m.en}×${m.boy}×${m.kalinlik} mm\n🔵 ${t('poperechny')}: ${m.qp} ${t('qty')} (${m.vp} m³)\n🟢 ${t('prodolny')}: ${m.qd} ${t('qty')} (${m.vd} m³)\n\n`; 
-        });
-        msg += `━━━━━━━━━━━━━━━\n🔵 ${t('poperechny')}: ${r.tqp} ${t('qty')} → ${r.tvp} m³\n🟢 ${t('prodolny')}: ${r.tqd} ${t('qty')} → ${r.tvd} m³\n━━━━━━━━━━━━━━━\n📊 *${t('grandTotal')}: ${r.gt} m³*`;
-        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+        
+        return { poperechny: totalPoperechny, prodolny: totalProdolny, volume: totalVolume.toFixed(3), mismatchCount };
     }
 
     // ==================== RENDER ====================
     function render() {
         const app = document.getElementById('app');
+        if (!app) return;
         
+        updateOnlineStatus();
+        updatePendingBadge();
+        
+        // LOGIN
         if (!state.loggedIn) {
             app.innerHTML = `
                 <div class="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center p-4">
@@ -469,405 +428,487 @@
                         <div class="text-center mb-8">
                             <div class="text-7xl mb-4">🏭</div>
                             <h1 class="text-2xl font-bold text-gray-800">${t('title')}</h1>
-                            <p class="text-sm text-green-600 mt-2">☁️ Bulut Senkronizasyonlu</p>
+                            <p class="text-sm text-green-600 mt-2">☁️ Bulut + 🤖 AI Doğrulama</p>
                             <div class="flex justify-center gap-3 mt-5">
-                                <button onclick="changeLang('tr')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='tr'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇹🇷</button>
-                                <button onclick="changeLang('ru')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='ru'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇷🇺</button>
-                                <button onclick="changeLang('kk')" class="px-4 py-2 rounded-lg text-lg transition-all ${state.lang==='kk'?'bg-indigo-600 text-white shadow-lg scale-110':'bg-gray-100 hover:bg-gray-200'}">🇰🇿</button>
+                                <button onclick="changeLang('tr')" class="px-4 py-2 rounded-lg ${state.lang==='tr'?'bg-indigo-600 text-white':'bg-gray-100'}">🇹🇷</button>
+                                <button onclick="changeLang('ru')" class="px-4 py-2 rounded-lg ${state.lang==='ru'?'bg-indigo-600 text-white':'bg-gray-100'}">🇷🇺</button>
+                                <button onclick="changeLang('kk')" class="px-4 py-2 rounded-lg ${state.lang==='kk'?'bg-indigo-600 text-white':'bg-gray-100'}">🇰🇿</button>
                             </div>
                         </div>
                         <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-center"></div>
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">${t('username')}</label>
-                                <input id="username" type="text" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="${t('username')}">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">${t('password')}</label>
-                                <input id="password" type="password" class="input-field w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="${t('password')}">
-                            </div>
-                            <button onclick="doLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-lg">${t('login')}</button>
+                            <input id="username" type="text" class="input-field w-full px-4 py-3 border-2 rounded-xl" placeholder="${t('username')}">
+                            <input id="password" type="password" class="input-field w-full px-4 py-3 border-2 rounded-xl" placeholder="${t('password')}">
+                            <button onclick="doLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg">${t('login')}</button>
                         </div>
-                        <div class="mt-8 p-4 bg-gray-50 rounded-xl text-sm text-gray-600">
+                        <div class="mt-6 p-4 bg-gray-50 rounded-xl text-sm text-gray-600">
                             <p class="font-bold mb-2">${t('demo')}:</p>
-                            <p class="mb-1">• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">yonetici</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">admin123</span></p>
-                            <p>• <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali</span> / <span class="font-mono bg-gray-200 px-2 py-0.5 rounded">ali123</span></p>
+                            <p>• <span class="font-mono bg-gray-200 px-1 rounded">yonetici/admin123</span></p>
+                            <p>• <span class="font-mono bg-gray-200 px-1 rounded">ali/ali123</span></p>
                         </div>
                     </div>
                 </div>`;
             return;
         }
 
-        if (!state.activeProses) {
-            app.innerHTML = `
-                <div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100">
-                    <div class="bg-white shadow-lg">
-                        <div class="max-w-6xl mx-auto p-4">
-                            <div class="flex items-center justify-between flex-wrap gap-4">
-                                <div>
-                                    <h1 class="text-2xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
-                                    <p class="text-gray-600 mt-1">${t('welcome')}, <span class="font-semibold">${state.user.name}</span></p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="flex bg-gray-100 rounded-lg p-1">
-                                        <button onclick="changeLang('tr')" class="px-3 py-1.5 rounded-md ${state.lang==='tr'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇹🇷</button>
-                                        <button onclick="changeLang('ru')" class="px-3 py-1.5 rounded-md ${state.lang==='ru'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇷🇺</button>
-                                        <button onclick="changeLang('kk')" class="px-3 py-1.5 rounded-md ${state.lang==='kk'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇰🇿</button>
-                                    </div>
-                                    <button onclick="doLogout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium">${t('logout')}</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="max-w-6xl mx-auto p-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${PROSESLER.map(p => {
-                                const hasAccess = hasPermission(p.id);
-                                return `
-                                    <div onclick="${hasAccess && p.active ? `selectProses('${p.id}')` : ''}" 
-                                         class="bg-white rounded-2xl shadow-lg p-6 transition-all ${hasAccess && p.active ? 'cursor-pointer hover:shadow-xl' : ''} ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : ''}">
-                                        <div class="flex items-center gap-4">
-                                            <div class="${p.color} w-16 h-16 rounded-xl flex items-center justify-center text-3xl shadow-lg">${p.icon}</div>
-                                            <div>
-                                                <h3 class="text-xl font-bold text-gray-800">${p.name[state.lang]}</h3>
-                                                ${!p.active ? `<p class="text-sm text-amber-600 mt-1">⏳ ${t('comingSoon')}</p>` : ''}
-                                                ${!hasAccess && p.active ? `<p class="text-sm text-red-500 mt-1">🔒 ${t('noPermission')}</p>` : ''}
-                                                ${hasAccess && p.active ? `<p class="text-sm text-green-600 mt-1">✓ ${t('open')}</p>` : ''}
-                                            </div>
-                                        </div>
-                                    </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                </div>`;
-            return;
-        }
-
-        // KURUTMA
+        // MAIN APP
         const filteredReports = state.filtering ? state.reports.filter(r => {
             const d = r.date.split(' ')[0];
             return (!state.filterStart || d >= state.filterStart) && (!state.filterEnd || d <= state.filterEnd);
         }) : state.reports;
-        
-        const pendingReports = getPendingReports();
+
+        const periodTotals = calculatePeriodTotals(filteredReports);
 
         app.innerHTML = `
-            <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50">
+            <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50 pb-8">
+                <!-- Header -->
                 <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
                     <div class="max-w-4xl mx-auto p-4">
-                        <div class="flex justify-between items-center flex-wrap gap-3">
-                            <div class="flex items-center gap-3">
-                                <button onclick="goBack()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl font-medium">← ${t('back')}</button>
-                                <div>
-                                    <h1 class="text-xl font-bold">🔥 ${PROSESLER.find(p=>p.id==='kurutma').name[state.lang]}</h1>
-                                    <p class="text-sm text-orange-100">${state.user.name}</p>
-                                </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h1 class="text-xl font-bold">🔥 Kurutma</h1>
+                                <p class="text-sm text-orange-100">${state.user.name} ${state.user.isAdmin ? '👑' : ''}</p>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="flex bg-white/20 rounded-lg p-1">
-                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded-md ${state.lang==='tr'?'bg-white text-orange-600 font-bold':''}">🇹🇷</button>
-                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded-md ${state.lang==='ru'?'bg-white text-orange-600 font-bold':''}">🇷🇺</button>
-                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded-md ${state.lang==='kk'?'bg-white text-orange-600 font-bold':''}">🇰🇿</button>
+                                    <button onclick="changeLang('tr')" class="px-2 py-1 rounded ${state.lang==='tr'?'bg-white text-orange-600':''}">🇹🇷</button>
+                                    <button onclick="changeLang('ru')" class="px-2 py-1 rounded ${state.lang==='ru'?'bg-white text-orange-600':''}">🇷🇺</button>
+                                    <button onclick="changeLang('kk')" class="px-2 py-1 rounded ${state.lang==='kk'?'bg-white text-orange-600':''}">🇰🇿</button>
                                 </div>
-                                <button onclick="doLogout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl font-medium">${t('logout')}</button>
+                                <button onclick="doLogout()" class="bg-red-500 px-4 py-2 rounded-xl text-sm">${t('logout')}</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="max-w-4xl mx-auto px-4 pt-4">
-                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-emerald-600 text-lg">📐</span>
-                            <span class="text-sm text-emerald-700"><strong>${t('standard')}:</strong> ${STANDART_OLCULER.en} × ${STANDART_OLCULER.boy} × ${STANDART_OLCULER.kalinlik} mm</span>
-                        </div>
-                        <button onclick="resetAllToStandard()" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg">↺ Tümünü Sıfırla</button>
                     </div>
                 </div>
 
                 <div class="max-w-4xl mx-auto p-4">
+                    <!-- Tabs -->
                     <div class="flex gap-2 mb-4 bg-white rounded-2xl p-2 shadow">
-                        <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='giris'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📝 ${t('dataEntry')}</button>
-                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='raporlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">📋 ${t('reports')} ${pendingReports.length > 0 ? `<span class="bg-amber-400 text-white text-xs px-2 py-0.5 rounded-full ml-1">${pendingReports.length}</span>` : ''}</button>
-                        ${state.user.isAdmin ? `<button onclick="setTab('ayarlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='ayarlar'?'bg-orange-500 text-white shadow-lg':'text-gray-600 hover:bg-gray-100'}">⚙️ ${t('settings')}</button>` : ''}
+                        <button onclick="setTab('giris')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='giris'?'bg-orange-500 text-white':'text-gray-600'}">📝 ${t('dataEntry')}</button>
+                        <button onclick="setTab('raporlar')" class="flex-1 py-3 rounded-xl font-semibold ${state.tab==='raporlar'?'bg-orange-500 text-white':'text-gray-600'}">📋 ${t('reports')}</button>
                     </div>
 
-                    ${state.tab === 'giris' ? `
-                        <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">${t('shift')}</label>
-                                    <div class="flex gap-2">
-                                        <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='sabah'?'bg-amber-400 text-white shadow-lg':'bg-gray-100 text-gray-600'}">🌅 ${t('morning')}</button>
-                                        <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='aksam'?'bg-indigo-500 text-white shadow-lg':'bg-gray-100 text-gray-600'}">🌙 ${t('evening')}</button>
-                                    </div>
-                                </div>
-                                ${state.user.isAdmin ? `
-                                    <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">📅 ${t('reportDate')}</label>
-                                        <input type="date" value="${state.date}" onchange="setDate(this.value)" class="input-field w-full p-3 border-2 border-gray-200 rounded-xl">
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                        
-                        ${state.machines.map(m => {
-                            const isStd = isStandard(m);
-                            return `
-                            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4 border-l-4 border-orange-400">
-                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
-                                        <span class="font-bold text-lg text-gray-800">${t('machine')} ${m.id}</span>
-                                        ${isStd ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-semibold">✓ ${t('standard')}</span>` : `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-semibold">⚡ Özel</span>`}
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-xs text-gray-500 mb-1">${t('volume')}</div>
-                                        <div class="flex gap-2">
-                                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'p')} m³</span>
-                                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-sm font-semibold">${calcVol(m,'d')} m³</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <div class="text-xs font-semibold text-gray-500 uppercase">📐 ${t('dimensions')} (${t('mm')})</div>
-                                        ${!isStd ? `<button onclick="resetToStandard(${m.id})" class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg">↺ ${t('standard')}</button>` : ''}
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-3">
-                                        <div>
-                                            <label class="block text-xs text-gray-600 mb-1">${t('width')}</label>
-                                            <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="numeric">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs text-gray-600 mb-1">${t('length')}</label>
-                                            <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="numeric">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs text-gray-600 mb-1">${t('thickness')}</label>
-                                            <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" class="input-field w-full p-3 border-2 ${isStd ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} rounded-xl text-center font-semibold" inputmode="decimal" step="0.1">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <div class="text-xs font-semibold text-gray-500 uppercase mb-2">📦 ${t('quantities')}</div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
-                                            <label class="block text-xs text-blue-700 font-bold mb-1">${t('poperechny')}</label>
-                                            <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" class="input-field w-full p-3 bg-white border-2 border-blue-300 rounded-xl text-center font-bold text-blue-700 text-lg" inputmode="numeric">
-                                        </div>
-                                        <div class="bg-green-50 rounded-xl p-3 border-2 border-green-200">
-                                            <label class="block text-xs text-green-700 font-bold mb-1">${t('prodolny')}</label>
-                                            <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" class="input-field w-full p-3 bg-white border-2 border-green-300 rounded-xl text-center font-bold text-green-700 text-lg" inputmode="numeric">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                        
-                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-xl p-5 text-white">
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div class="bg-white/20 rounded-xl p-4 text-center">
-                                    <div class="text-sm opacity-80">${t('poperechny')}</div>
-                                    <div class="text-2xl font-bold mt-1">${totalVol('p')} m³</div>
-                                    <div class="text-sm opacity-80 mt-1">${totalQty('p')} ${t('qty')}</div>
-                                </div>
-                                <div class="bg-white/20 rounded-xl p-4 text-center">
-                                    <div class="text-sm opacity-80">${t('prodolny')}</div>
-                                    <div class="text-2xl font-bold mt-1">${totalVol('d')} m³</div>
-                                    <div class="text-sm opacity-80 mt-1">${totalQty('d')} ${t('qty')}</div>
-                                </div>
-                            </div>
-                            <div class="bg-white/30 rounded-xl p-4 text-center mb-4">
-                                <div class="text-lg opacity-90">${t('grandTotal')}</div>
-                                <div class="text-4xl font-bold mt-1">${grandTotal()} m³</div>
-                                <div class="text-sm opacity-80 mt-1">${totalQty('p') + totalQty('d')} ${t('qty')}</div>
-                            </div>
-                            <button onclick="doSaveReport()" id="saveBtn" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">💾 ${t('save')}</button>
-                        </div>
-                    ` : ''}
-
-                    ${state.tab === 'raporlar' ? `
-                        ${pendingReports.length > 0 ? `
-                            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-4">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-2xl">⏳</span>
-                                        <div>
-                                            <p class="font-bold text-amber-800">${pendingReports.length} ${t('pendingSync')}</p>
-                                            <p class="text-sm text-amber-600">İnternet bağlantısı bekleniyor</p>
-                                        </div>
-                                    </div>
-                                    <button onclick="syncPendingReports()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-semibold">${t('syncNow')}</button>
-                                </div>
-                            </div>
-                        ` : ''}
-                    
-                        <div class="bg-white rounded-2xl shadow-lg p-4 mb-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">${t('startDate')}</label>
-                                    <input type="date" value="${state.filterStart}" onchange="state.filterStart=this.value" class="w-full p-3 border-2 border-gray-200 rounded-xl">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">${t('endDate')}</label>
-                                    <input type="date" value="${state.filterEnd}" onchange="state.filterEnd=this.value" class="w-full p-3 border-2 border-gray-200 rounded-xl">
-                                </div>
-                                <div class="flex items-end gap-2">
-                                    <button onclick="applyFilter()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold">${t('filter')}</button>
-                                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-xl font-semibold">${t('showAll')}</button>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex gap-2 mt-3">
-                                <button onclick="doLoadReports()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">🔄 ${t('refresh')}</button>
-                                ${filteredReports.length > 0 ? `<button onclick='exportExcel(${JSON.stringify(filteredReports).replace(/'/g, "\\'")})' class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold">📊 ${t('exportExcel')}</button>` : ''}
-                            </div>
-                        </div>
-                        
-                        ${state.loading ? `
-                            <div class="bg-white rounded-2xl shadow p-8 text-center">
-                                <div class="spinner mx-auto mb-4" style="border-top-color: #4F46E5; width: 40px; height: 40px;"></div>
-                                <p class="text-gray-500">${t('loading')}</p>
-                            </div>
-                        ` : filteredReports.length === 0 ? `
-                            <div class="bg-white rounded-2xl shadow p-8 text-center">
-                                <div class="text-6xl mb-4">📋</div>
-                                <p class="text-gray-500">${t('noReports')}</p>
-                            </div>
-                        ` : filteredReports.map(r => `
-                            <div class="bg-white rounded-2xl shadow-lg p-5 mb-4">
-                                <div class="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
-                                    <div>
-                                        <div class="font-bold text-lg text-gray-800">${r.date}</div>
-                                        <div class="text-sm text-gray-500 mt-1">
-                                            ${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.shift === 'sabah' ? t('morning') : t('evening')} • 👤 ${r.user}
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <button onclick='shareWhatsApp(${JSON.stringify(r).replace(/'/g, "\\'")})' class="bg-green-500 hover:bg-green-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">📱</button>
-                                        <button onclick='exportExcel([${JSON.stringify(r).replace(/'/g, "\\'")}])' class="bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">📊</button>
-                                        ${state.user.isAdmin ? `<button onclick="doDeleteReport(${r.id})" class="bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-xl flex items-center justify-center">🗑️</button>` : ''}
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-2 mb-4">
-                                    ${r.machines.map(m => `
-                                        <div class="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
-                                            <div class="flex items-center gap-3">
-                                                <div class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm">${m.id}</div>
-                                                <span class="text-sm text-gray-600">${m.en}×${m.boy}×${m.kalinlik}</span>
-                                            </div>
-                                            <div class="flex gap-2">
-                                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qp} → ${m.vp}m³</span>
-                                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">${m.qd} → ${m.vd}m³</span>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                
-                                <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div class="bg-blue-100 rounded-xl p-3 text-center">
-                                        <div class="text-xs text-blue-600 font-semibold">${t('poperechny')}</div>
-                                        <div class="text-lg font-bold text-blue-800">${r.tqp} ${t('qty')} → ${r.tvp} m³</div>
-                                    </div>
-                                    <div class="bg-green-100 rounded-xl p-3 text-center">
-                                        <div class="text-xs text-green-600 font-semibold">${t('prodolny')}</div>
-                                        <div class="text-lg font-bold text-green-800">${r.tqd} ${t('qty')} → ${r.tvd} m³</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="bg-indigo-100 rounded-xl p-4 text-center">
-                                    <div class="text-sm text-indigo-600 font-semibold">${t('grandTotal')}</div>
-                                    <div class="text-2xl font-bold text-indigo-800">${r.gt} m³</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    ` : ''}
-
-                    ${state.tab === 'ayarlar' && state.user.isAdmin ? `
-                        <div class="bg-white rounded-2xl shadow-lg p-5">
-                            <h3 class="text-xl font-bold text-red-600 mb-4">⚠️ ${t('settings')}</h3>
-                            <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                                <p class="text-gray-600">${t('reports')}: <span class="font-bold text-2xl text-indigo-600">${state.reports.length}</span></p>
-                                <p class="text-sm text-gray-500 mt-2">☁️ Veriler bulutta saklanıyor</p>
-                            </div>
-                            <button onclick="doDeleteAll()" class="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold">🗑️ ${t('deleteAll')}</button>
-                        </div>
-                    ` : ''}
+                    ${state.tab === 'giris' ? renderDataEntry() : renderReports(filteredReports, periodTotals)}
                 </div>
             </div>
-            
-            <div id="successMsg" class="hidden"></div>
+            <div id="successMsg" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl hidden z-50">✅ ${t('saved')}</div>
         `;
     }
 
-    // ==================== GLOBAL FUNCTIONS ====================
+    function renderDataEntry() {
+        return `
+            <!-- Shift & Date -->
+            <div class="bg-white rounded-2xl shadow-lg p-4 mb-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">${t('shift')}</label>
+                        <div class="flex gap-2">
+                            <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='sabah'?'bg-amber-400 text-white':'bg-gray-100'}">🌅 ${t('morning')}</button>
+                            <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${state.shift==='aksam'?'bg-indigo-500 text-white':'bg-gray-100'}">🌙 ${t('evening')}</button>
+                        </div>
+                    </div>
+                    ${state.user.isAdmin ? `
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">📅 ${t('reportDate')}</label>
+                            <input type="date" value="${state.date}" onchange="setDate(this.value)" class="w-full p-3 border-2 rounded-xl">
+                        </div>
+                    ` : '<div></div>'}
+                </div>
+            </div>
+
+            <!-- Machines -->
+            ${state.machines.map(m => `
+                <div class="bg-white rounded-2xl shadow-lg p-4 mb-3 border-l-4 border-orange-400">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
+                            <span class="font-bold text-lg">${t('machine')} ${m.id}</span>
+                        </div>
+                        
+                        <!-- Photo Button -->
+                        <label class="cursor-pointer">
+                            <div class="flex items-center gap-2 ${m.photoPreview ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'} px-3 py-2 rounded-xl">
+                                ${m.photoPreview ? '✅' : '📸'} ${t('takePhoto')}
+                            </div>
+                            <input type="file" accept="image/*" capture="environment" onchange="handleMachinePhoto(${m.id}, this)" class="hidden">
+                        </label>
+                    </div>
+                    
+                    <!-- Photo Preview -->
+                    ${m.photoPreview ? `
+                        <div class="mb-3 relative">
+                            <img src="${m.photoPreview}" class="w-full h-32 object-cover rounded-xl border-2 border-green-300">
+                            <button onclick="clearMachinePhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">✕</button>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Dimensions -->
+                    <div class="grid grid-cols-3 gap-2 mb-3">
+                        <div>
+                            <label class="text-xs text-gray-500">${t('width')}</label>
+                            <input type="number" value="${m.en}" onchange="updateMachine(${m.id},'en',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-emerald-50">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">${t('length')}</label>
+                            <input type="number" value="${m.boy}" onchange="updateMachine(${m.id},'boy',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-emerald-50">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500">${t('thickness')}</label>
+                            <input type="number" value="${m.kalinlik}" onchange="updateMachine(${m.id},'kalinlik',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-emerald-50" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <!-- Quantities -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 p-3 rounded-xl border-2 border-blue-200">
+                            <label class="text-xs text-blue-700 font-bold block mb-1">${t('poperechny')}</label>
+                            <input type="number" value="${m.qp}" onchange="updateMachine(${m.id},'qp',this.value)" class="input-field w-full p-3 border-2 border-blue-300 rounded-xl text-center font-bold text-blue-700 text-lg" inputmode="numeric" placeholder="0">
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-xl border-2 border-green-200">
+                            <label class="text-xs text-green-700 font-bold block mb-1">${t('prodolny')}</label>
+                            <input type="number" value="${m.qd}" onchange="updateMachine(${m.id},'qd',this.value)" class="input-field w-full p-3 border-2 border-green-300 rounded-xl text-center font-bold text-green-700 text-lg" inputmode="numeric" placeholder="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Volume -->
+                    <div class="mt-3 flex justify-end gap-2 text-sm">
+                        <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">${calcVol(m,'p')} m³</span>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded">${calcVol(m,'d')} m³</span>
+                    </div>
+                </div>
+            `).join('')}
+
+            <!-- Totals & Save -->
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-5 text-white">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white/20 rounded-xl p-4 text-center">
+                        <div class="text-sm opacity-80">${t('poperechny')}</div>
+                        <div class="text-2xl font-bold">${totalQty('p')} ${t('qty')}</div>
+                        <div class="text-lg">${totalVol('p')} m³</div>
+                    </div>
+                    <div class="bg-white/20 rounded-xl p-4 text-center">
+                        <div class="text-sm opacity-80">${t('prodolny')}</div>
+                        <div class="text-2xl font-bold">${totalQty('d')} ${t('qty')}</div>
+                        <div class="text-lg">${totalVol('d')} m³</div>
+                    </div>
+                </div>
+                <div class="bg-white/30 rounded-xl p-4 text-center mb-4">
+                    <div class="text-lg">${t('grandTotal')}</div>
+                    <div class="text-4xl font-bold">${grandTotal()} m³</div>
+                </div>
+                <button onclick="doSaveReport()" id="saveBtn" class="w-full bg-green-500 hover:bg-green-600 py-4 rounded-xl font-bold text-lg" ${state.saving ? 'disabled' : ''}>
+                    ${state.saving ? `<span class="spinner"></span> ${t('analyzing')}` : `💾 ${t('save')}`}
+                </button>
+            </div>
+        `;
+    }
+
+    function renderReports(filteredReports, periodTotals) {
+        const isAdmin = state.user.isAdmin;
+        
+        return `
+            <!-- Period Summary (Admin Only) -->
+            ${isAdmin ? `
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 mb-4 text-white">
+                    <h3 class="font-bold mb-3">📊 ${t('totalSummary')}</h3>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white/20 rounded-xl p-2">
+                            <div class="text-xs opacity-80">${t('poperechny')}</div>
+                            <div class="text-lg font-bold">${periodTotals.poperechny}</div>
+                        </div>
+                        <div class="bg-white/20 rounded-xl p-2">
+                            <div class="text-xs opacity-80">${t('prodolny')}</div>
+                            <div class="text-lg font-bold">${periodTotals.prodolny}</div>
+                        </div>
+                        <div class="bg-white/20 rounded-xl p-2">
+                            <div class="text-xs opacity-80">${t('grandTotal')}</div>
+                            <div class="text-lg font-bold">${periodTotals.volume} m³</div>
+                        </div>
+                    </div>
+                    ${periodTotals.mismatchCount > 0 ? `
+                        <div class="bg-red-500/50 rounded-xl p-2 mt-2 text-center text-sm">
+                            ⚠️ ${periodTotals.mismatchCount} ${t('mismatchCount')} (${t('operatorData')})
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
+
+            <!-- Filters -->
+            <div class="bg-white rounded-2xl shadow-lg p-4 mb-4">
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-500">${t('startDate')}</label>
+                        <input type="date" value="${state.filterStart}" onchange="state.filterStart=this.value" class="w-full p-2 border rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500">${t('endDate')}</label>
+                        <input type="date" value="${state.filterEnd}" onchange="state.filterEnd=this.value" class="w-full p-2 border rounded-xl text-sm">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="applyFilter()" class="w-full bg-indigo-500 text-white py-2 rounded-xl text-sm">${t('filter')}</button>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    ${state.filtering ? `<button onclick="clearFilter()" class="flex-1 bg-gray-400 text-white py-2 rounded-xl text-sm">${t('showAll')}</button>` : ''}
+                    <button onclick="doLoadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-xl text-sm">🔄 ${t('refresh')}</button>
+                    <button onclick="exportExcel()" class="flex-1 bg-green-500 text-white py-2 rounded-xl text-sm">📊 Excel</button>
+                </div>
+            </div>
+
+            <!-- Reports List -->
+            ${state.loading ? `
+                <div class="text-center py-8">
+                    <div class="spinner" style="width:40px;height:40px;border-top-color:#4F46E5;margin:0 auto"></div>
+                    <p class="mt-2 text-gray-500">${t('loading')}</p>
+                </div>
+            ` : filteredReports.length === 0 ? `
+                <div class="bg-white rounded-2xl p-8 text-center text-gray-500">📋 ${t('noReports')}</div>
+            ` : filteredReports.map(r => renderReportCard(r)).join('')}
+        `;
+    }
+
+    function renderReportCard(r) {
+        const isAdmin = state.user.isAdmin;
+        const statusColor = r.verification_status === 'verified' || r.verification_status === 'corrected' ? 'green' : 
+                           r.verification_status === 'mismatch' ? 'red' : 'gray';
+        const statusIcon = r.verification_status === 'verified' ? '🟢' : 
+                          r.verification_status === 'corrected' ? '🟢✓' :
+                          r.verification_status === 'mismatch' ? '🔴' : '⚪';
+        const statusText = r.verification_status === 'verified' ? t('verified') :
+                          r.verification_status === 'corrected' ? 'Düzeltildi' :
+                          r.verification_status === 'mismatch' ? t('mismatch') : '-';
+
+        return `
+            <div class="bg-white rounded-2xl shadow-lg p-4 mb-4 border-l-4 border-${statusColor}-500">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <div class="font-bold">${r.date}</div>
+                        <div class="text-sm text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user}</div>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="bg-${statusColor}-100 text-${statusColor}-700 px-3 py-1 rounded-full text-sm font-bold">
+                            ${statusIcon} ${statusText}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Machine Details (Admin sees photos & AI comparison) -->
+                ${isAdmin && r.verification_details && r.verification_details.length > 0 ? `
+                    <div class="space-y-2 mb-3">
+                        ${r.verification_details.map((v, idx) => `
+                            <div class="bg-gray-50 rounded-xl p-2 flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold">M${v.machineId}</span>
+                                    ${r.photos && r.photos[v.machineId] ? `
+                                        <img src="${r.photos[v.machineId]}" class="w-12 h-12 object-cover rounded cursor-pointer" onclick="window.open('${r.photos[v.machineId]}')">
+                                    ` : '<span class="text-gray-400">📷 Yok</span>'}
+                                </div>
+                                <div class="text-right">
+                                    ${v.status === 'unknown' ? `<span class="text-gray-400">-</span>` : `
+                                        <div class="${v.status === 'mismatch' ? 'text-red-600' : 'text-green-600'}">
+                                            ${v.status === 'mismatch' ? '❌' : '✅'} 
+                                            AI: ${v.expected} → Girilen: ${v.actual}
+                                            ${v.diff > 0 ? `(${v.diff} fark)` : ''}
+                                        </div>
+                                    `}
+                                </div>
+                                ${isAdmin && v.status === 'mismatch' && r.verification_status !== 'corrected' ? `
+                                    <button onclick="doCorrect(${r.id}, ${v.machineId}, ${v.expected}, '${v.type}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs ml-2">✏️</button>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                <!-- Totals -->
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="bg-blue-50 rounded-xl p-2 text-center">
+                        <div class="text-xs text-blue-600">${t('poperechny')}</div>
+                        <div class="font-bold text-blue-800">${r.tqp} → ${r.tvp} m³</div>
+                    </div>
+                    <div class="bg-green-50 rounded-xl p-2 text-center">
+                        <div class="text-xs text-green-600">${t('prodolny')}</div>
+                        <div class="font-bold text-green-800">${r.tqd} → ${r.tvd} m³</div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-100 rounded-xl p-2 text-center">
+                    <div class="text-sm text-indigo-600">${t('grandTotal')}</div>
+                    <div class="text-xl font-bold text-indigo-800">${r.gt} m³</div>
+                </div>
+
+                <!-- Admin Actions -->
+                ${isAdmin && r.verification_status === 'mismatch' && !r.warning_logged ? `
+                    <button onclick="logWarning(${r.id})" class="w-full mt-2 bg-amber-500 text-white py-2 rounded-xl text-sm">📝 ${t('warn')}</button>
+                ` : ''}
+                ${r.warning_logged ? `<div class="text-center text-amber-600 text-sm mt-2">📝 Uyarı kaydedildi</div>` : ''}
+                ${r.corrected_by ? `<div class="text-center text-green-600 text-sm mt-2">✓ ${r.corrected_by} düzeltti</div>` : ''}
+            </div>
+        `;
+    }
+
+    // ==================== HANDLERS ====================
     window.changeLang = (l) => { state.lang = l; localStorage.setItem('lang', l); render(); };
     window.doLogin = () => {
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
         const user = USERS[u];
         if (!user || user.password !== p) { 
-            document.getElementById('loginError').textContent = 'Kullanıcı adı veya şifre hatalı!'; 
+            document.getElementById('loginError').textContent = 'Hatalı!'; 
             document.getElementById('loginError').classList.remove('hidden'); 
             return; 
         }
-        state.user = user; state.loggedIn = true; render();
+        state.user = user; state.loggedIn = true; render(); loadReports();
     };
-    window.doLogout = () => { state.loggedIn = false; state.user = null; state.activeProses = null; state.tab = 'giris'; render(); };
-    window.selectProses = async (id) => { state.activeProses = id; state.tab = 'giris'; render(); await loadReports(); };
-    window.goBack = () => { state.activeProses = null; render(); };
+    window.doLogout = () => { state.loggedIn = false; state.user = null; state.tab = 'giris'; render(); };
     window.setTab = (t) => { state.tab = t; render(); };
     window.setShift = (s) => { state.shift = s; render(); };
     window.setDate = (d) => { state.date = d; render(); };
-    window.updateMachine = (id, field, val) => { state.machines = state.machines.map(m => m.id === id ? {...m, [field]: val} : m); render(); };
-    window.resetToStandard = (id) => { state.machines = state.machines.map(m => m.id === id ? {...m, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik} : m); render(); };
-    window.resetAllToStandard = () => { state.machines = state.machines.map(m => ({...m, en: STANDART_OLCULER.en, boy: STANDART_OLCULER.boy, kalinlik: STANDART_OLCULER.kalinlik})); render(); };
-    
-    window.doSaveReport = async () => {
-        const btn = document.getElementById('saveBtn');
-        btn.innerHTML = `<span class="spinner"></span> ${t('saving')}`;
-        btn.disabled = true;
+    window.updateMachine = (id, field, val) => { 
+        state.machines = state.machines.map(m => m.id === id ? {...m, [field]: val} : m); 
+        render(); 
+    };
+
+    window.handleMachinePhoto = (machineId, input) => {
+        const file = input.files[0];
+        if (!file) return;
         
+        state.machines = state.machines.map(m => {
+            if (m.id === machineId) {
+                return { ...m, photo: file, photoPreview: URL.createObjectURL(file) };
+            }
+            return m;
+        });
+        render();
+    };
+
+    window.clearMachinePhoto = (machineId) => {
+        state.machines = state.machines.map(m => {
+            if (m.id === machineId) {
+                return { ...m, photo: null, photoPreview: null };
+            }
+            return m;
+        });
+        render();
+    };
+
+    window.doSaveReport = async () => {
+        state.saving = true;
+        render();
+
+        const photos = {};
+        const aiReadings = {};
+        const verificationDetails = [];
+
+        // Upload photos and analyze
+        for (const m of state.machines) {
+            if (m.photo) {
+                // Upload to Cloudinary
+                const photoUrl = await uploadToCloudinary(m.photo);
+                if (photoUrl) {
+                    photos[m.id] = photoUrl;
+                    
+                    // Analyze with Claude
+                    const aiReading = await analyzeWithClaude(photoUrl);
+                    aiReadings[m.id] = aiReading;
+                    
+                    // Verify
+                    const verification = verifyMachine(m, aiReading);
+                    verificationDetails.push({ machineId: m.id, ...verification });
+                }
+            } else {
+                verificationDetails.push({ machineId: m.id, status: 'unknown' });
+            }
+        }
+
+        const verificationStatus = getOverallVerification(verificationDetails);
+
         const report = { 
             date: state.date + ' ' + new Date().toTimeString().slice(0,5), 
             shift: state.shift, 
             user: state.user.name, 
-            machines: state.machines.map(m => ({...m, vp: calcVol(m,'p'), vd: calcVol(m,'d')})), 
-            tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal() 
+            machines: state.machines.map(m => ({
+                id: m.id,
+                en: m.en,
+                boy: m.boy,
+                kalinlik: m.kalinlik,
+                qp: m.qp,
+                qd: m.qd,
+                vp: calcVol(m,'p'), 
+                vd: calcVol(m,'d')
+            })), 
+            tvp: totalVol('p'), 
+            tvd: totalVol('d'), 
+            tqp: totalQty('p'), 
+            tqd: totalQty('d'), 
+            gt: grandTotal(),
+            photos,
+            ai_readings: aiReadings,
+            verification_status: verificationStatus,
+            verification_details: verificationDetails
         };
-        
-        let savedToCloud = false;
-        
+
+        let saved = false;
         if (navigator.onLine) {
-            savedToCloud = await saveReportToCloud(report);
-            if (savedToCloud) {
+            saved = await saveReportToCloud(report);
+            if (saved) {
                 showSyncBadge();
                 await loadReports();
             }
         }
         
-        if (!savedToCloud) {
-            // Offline veya hata - yerel kaydet
+        if (!saved) {
             savePendingReport(report);
         }
-        
+
+        // Reset form
         state.machines = createDefaultMachines();
+        state.saving = false;
         render();
-        showSuccessMessage(!savedToCloud);
+        
+        const msg = document.getElementById('successMsg');
+        if (msg) {
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3000);
+        }
     };
-    
-    window.doDeleteReport = async (id) => { if (confirm(t('confirmDelete'))) { await deleteReport(id); await loadReports(); } };
-    window.doDeleteAll = async () => { if (confirm(t('confirmDelete'))) { await deleteAllReports(); await loadReports(); } };
+
+    window.logWarning = async (id) => {
+        if (confirm('Bu rapor için uyarı kaydedilsin mi?')) {
+            await updateReportWarning(id);
+        }
+    };
+
+    window.doCorrect = (reportId, machineId, expectedValue, type) => {
+        const newValue = prompt(`Doğru değer nedir?\n\nAI okudu: ${expectedValue}`, expectedValue);
+        if (newValue !== null) {
+            correctReport(reportId, machineId, parseInt(newValue), type);
+        }
+    };
+
     window.doLoadReports = loadReports;
     window.applyFilter = () => { state.filtering = true; render(); };
     window.clearFilter = () => { state.filterStart = ''; state.filterEnd = ''; state.filtering = false; render(); };
-    window.exportExcel = exportExcel;
-    window.shareWhatsApp = shareWhatsApp;
-    window.syncPendingReports = syncPendingReports;
+    
+    window.exportExcel = () => {
+        const rpts = state.filtering ? state.reports.filter(r => {
+            const d = r.date.split(' ')[0];
+            return (!state.filterStart || d >= state.filterStart) && (!state.filterEnd || d <= state.filterEnd);
+        }) : state.reports;
+        
+        let csv = '\uFEFF' + `Tarih,Vardiya,Kullanıcı,Поперечный,Поперечный m³,Продольный,Продольный m³,Toplam m³,Doğrulama\n`;
+        rpts.forEach(r => {
+            csv += `${r.date},${r.shift},${r.user},${r.tqp},${r.tvp},${r.tqd},${r.tvd},${r.gt},${r.verification_status}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'rapor_' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+    };
 
+    // Initial render
     render();
     </script>
 </body>
