@@ -160,7 +160,13 @@
                 body: formData
             });
             const data = await response.json();
-            return data.secure_url;
+            
+            // URL'i JPG formatına çevir ve optimize et
+            if (data.secure_url) {
+                // Cloudinary transformation: JPG formatı, kalite 80
+                return data.secure_url.replace('/upload/', '/upload/f_jpg,q_80/');
+            }
+            return null;
         } catch (error) {
             console.error('Cloudinary yükleme hatası:', error);
             return null;
@@ -170,8 +176,8 @@
     // ==================== CLAUDE AI ANALYSIS (via Vercel Edge Function) ====================
     async function analyzeWithClaude(imageUrl) {
         try {
-            // Cloudinary'nin fotoğrafı işlemesi için 4 saniye bekle
-            await new Promise(resolve => setTimeout(resolve, 4000));
+            // Cloudinary'nin fotoğrafı işlemesi için 3 saniye bekle
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
             const response = await fetch('/api/analyze', {
                 method: 'POST',
