@@ -175,28 +175,53 @@
 
     // ==================== CLAUDE AI ANALYSIS (via Vercel Edge Function) ====================
     async function analyzeWithClaude(imageUrl) {
-        try {
-            // Cloudinary'nin fotoğrafı işlemesi için 3 saniye bekle
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            const response = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl })
-            });
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                console.error('AI hatası:', data.error);
+        // 3 deneme yap
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                console.log(`AI analiz deneme ${attempt}...`, imageUrl);
+                
+                // Cloudinary'nin fotoğrafı işlemesi için bekle
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 saniye timeout
+                
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                const data = await response.json();
+                console.log('AI yanıt:', data);
+                
+                if (data.error) {
+                    console.error('AI hatası:', data.error);
+                    if (attempt < 3) continue; // Tekrar dene
+                    return null;
+                }
+                
+                if (data.result !== null) {
+                    return data.result;
+                }
+                
+                // null döndüyse tekrar dene
+                if (attempt < 3) {
+                    console.log('AI null döndü, tekrar deneniyor...');
+                    continue;
+                }
+                
+                return null;
+            } catch (error) {
+                console.error(`AI analiz hatası (deneme ${attempt}):`, error);
+                if (attempt < 3) continue;
                 return null;
             }
-            
-            return data.result;
-        } catch (error) {
-            console.error('AI analiz hatası:', error);
-            return null;
         }
+        return null;
     }
 
     // ==================== VERIFICATION ====================
