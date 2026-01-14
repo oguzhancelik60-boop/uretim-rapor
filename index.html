@@ -737,6 +737,38 @@
             ` : filteredReports.length === 0 ? `
                 <div class="bg-white rounded-2xl p-8 text-center text-gray-500">📋 ${t('noReports')}</div>
             ` : filteredReports.map(r => renderReportCard(r)).join('')}
+            
+            <!-- Filtered Period Summary (at bottom) -->
+            ${state.filtering && filteredReports.length > 0 ? `
+                <div class="bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl p-5 text-white mt-4">
+                    <h3 class="font-bold mb-3 text-center">📊 Seçilen Dönem Toplamı</h3>
+                    <div class="text-center text-sm mb-3 opacity-80">
+                        ${state.filterStart || 'Başlangıç'} → ${state.filterEnd || 'Bitiş'} (${filteredReports.length} rapor)
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-white/20 rounded-xl p-3">
+                            <div class="text-xs opacity-80">${t('poperechny')}</div>
+                            <div class="text-2xl font-bold">${periodTotals.poperechny}</div>
+                            <div class="text-xs opacity-80">adet</div>
+                        </div>
+                        <div class="bg-white/20 rounded-xl p-3">
+                            <div class="text-xs opacity-80">${t('prodolny')}</div>
+                            <div class="text-2xl font-bold">${periodTotals.prodolny}</div>
+                            <div class="text-xs opacity-80">adet</div>
+                        </div>
+                        <div class="bg-white/20 rounded-xl p-3">
+                            <div class="text-xs opacity-80">${t('grandTotal')}</div>
+                            <div class="text-2xl font-bold">${periodTotals.volume}</div>
+                            <div class="text-xs opacity-80">m³</div>
+                        </div>
+                    </div>
+                    ${periodTotals.mismatchCount > 0 ? `
+                        <div class="bg-red-500/50 rounded-xl p-2 mt-3 text-center text-sm">
+                            ⚠️ ${periodTotals.mismatchCount} uyumsuz rapor
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
         `;
     }
 
@@ -794,38 +826,50 @@
                         <div class="font-bold">${r.date}</div>
                         <div class="text-sm text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user}</div>
                     </div>
-                    ${isAdmin ? `
-                        <div class="bg-${statusColor}-100 text-${statusColor}-700 px-3 py-1 rounded-full text-sm font-bold">
-                            ${statusIcon} ${statusText}
-                        </div>
-                    ` : ''}
+                    <div class="flex items-center gap-2">
+                        ${isAdmin ? `
+                            <div class="bg-${statusColor}-100 text-${statusColor}-700 px-3 py-1 rounded-full text-sm font-bold">
+                                ${statusIcon} ${statusText}
+                            </div>
+                        ` : ''}
+                        ${isAdmin ? `
+                            <button onclick="editReport(${r.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">✏️</button>
+                            <button onclick="deleteReport(${r.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">🗑️</button>
+                        ` : ''}
+                    </div>
                 </div>
 
                 <!-- Machine Details (Admin sees photos & AI comparison) -->
                 ${isAdmin && r.verification_details && r.verification_details.length > 0 ? `
                     <div class="space-y-2 mb-3">
-                        ${r.verification_details.map((v, idx) => `
-                            <div class="bg-gray-50 rounded-xl p-2 flex items-center justify-between text-sm">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold">M${v.machineId}</span>
-                                    ${r.photos && r.photos[v.machineId] ? `
-                                        <img src="${r.photos[v.machineId]}" class="w-12 h-12 object-cover rounded cursor-pointer" onclick="window.open('${r.photos[v.machineId]}')">
-                                    ` : '<span class="text-gray-400">📷 Yok</span>'}
+                        ${r.verification_details.map((v, idx) => {
+                            const machine = r.machines.find(m => m.id === v.machineId) || {};
+                            return `
+                            <div class="bg-gray-50 rounded-xl p-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold">M${v.machineId}</span>
+                                        ${r.photos && r.photos[v.machineId] ? `
+                                            <img src="${r.photos[v.machineId]}" class="w-12 h-12 object-cover rounded cursor-pointer" onclick="window.open('${r.photos[v.machineId]}')">
+                                        ` : '<span class="text-gray-400">📷 Yok</span>'}
+                                    </div>
+                                    <div class="text-right">
+                                        ${v.status === 'unknown' ? `<span class="text-gray-400">-</span>` : `
+                                            <div class="${v.status === 'mismatch' ? 'text-red-600' : 'text-green-600'}">
+                                                ${v.status === 'mismatch' ? '❌' : '✅'} 
+                                                AI: ${v.expected} → Girilen: ${v.actual}
+                                                ${v.diff > 0 ? `(${v.diff} fark)` : ''}
+                                            </div>
+                                        `}
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    ${v.status === 'unknown' ? `<span class="text-gray-400">-</span>` : `
-                                        <div class="${v.status === 'mismatch' ? 'text-red-600' : 'text-green-600'}">
-                                            ${v.status === 'mismatch' ? '❌' : '✅'} 
-                                            AI: ${v.expected} → Girilen: ${v.actual}
-                                            ${v.diff > 0 ? `(${v.diff} fark)` : ''}
-                                        </div>
-                                    `}
+                                <div class="flex items-center justify-between mt-2 text-xs">
+                                    <span class="text-blue-600">П: ${machine.qp || 0}</span>
+                                    <span class="text-green-600">Пр: ${machine.qd || 0}</span>
+                                    <button onclick="editMachineInReport(${r.id}, ${v.machineId})" class="bg-gray-400 text-white px-2 py-1 rounded">✏️ Düzenle</button>
                                 </div>
-                                ${isAdmin && v.status === 'mismatch' && r.verification_status !== 'corrected' ? `
-                                    <button onclick="doCorrect(${r.id}, ${v.machineId}, ${v.expected}, '${v.type}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs ml-2">✏️</button>
-                                ` : ''}
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 ` : ''}
 
@@ -994,6 +1038,105 @@
         const newValue = prompt(`Doğru değer nedir?\n\nAI okudu: ${expectedValue}`, expectedValue);
         if (newValue !== null) {
             correctReport(reportId, machineId, parseInt(newValue), type);
+        }
+    };
+
+    // Tek raporu sil
+    window.deleteReport = async (id) => {
+        if (confirm('Bu raporu silmek istediğinize emin misiniz?')) {
+            try {
+                await db.from('reports').delete().eq('id', id);
+                showSyncBadge();
+                await loadReports();
+                alert('✅ Rapor silindi!');
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                alert('❌ Silme hatası: ' + error.message);
+            }
+        }
+    };
+
+    // Raporu düzenle (tarih, vardiya)
+    window.editReport = async (id) => {
+        const report = state.reports.find(r => r.id === id);
+        if (!report) return;
+        
+        const newDate = prompt('Tarih (YYYY-MM-DD):', report.date.split(' ')[0]);
+        if (newDate === null) return;
+        
+        const newShift = prompt('Vardiya (sabah/aksam):', report.shift);
+        if (newShift === null) return;
+        
+        try {
+            await db.from('reports').update({
+                date: newDate + ' ' + report.date.split(' ')[1],
+                shift: newShift
+            }).eq('id', id);
+            showSyncBadge();
+            await loadReports();
+            alert('✅ Rapor güncellendi!');
+        } catch (error) {
+            console.error('Güncelleme hatası:', error);
+            alert('❌ Güncelleme hatası: ' + error.message);
+        }
+    };
+
+    // Makine değerlerini düzenle
+    window.editMachineInReport = async (reportId, machineId) => {
+        const report = state.reports.find(r => r.id === reportId);
+        if (!report) return;
+        
+        const machine = report.machines.find(m => m.id === machineId);
+        if (!machine) return;
+        
+        const newQp = prompt(`Makine ${machineId} - Поперечный:`, machine.qp || 0);
+        if (newQp === null) return;
+        
+        const newQd = prompt(`Makine ${machineId} - Продольный:`, machine.qd || 0);
+        if (newQd === null) return;
+        
+        // Makineleri güncelle
+        const updatedMachines = report.machines.map(m => {
+            if (m.id === machineId) {
+                const en = parseFloat(m.en) || 1250;
+                const boy = parseFloat(m.boy) || 2500;
+                const kalinlik = parseFloat(m.kalinlik) || 1.5;
+                const qp = parseInt(newQp) || 0;
+                const qd = parseInt(newQd) || 0;
+                return {
+                    ...m,
+                    qp: qp,
+                    qd: qd,
+                    vp: ((en/1000) * (boy/1000) * (kalinlik/1000) * qp).toFixed(3),
+                    vd: ((en/1000) * (boy/1000) * (kalinlik/1000) * qd).toFixed(3)
+                };
+            }
+            return m;
+        });
+        
+        // Toplamları yeniden hesapla
+        const newTqp = updatedMachines.reduce((sum, m) => sum + (parseInt(m.qp) || 0), 0);
+        const newTqd = updatedMachines.reduce((sum, m) => sum + (parseInt(m.qd) || 0), 0);
+        const newTvp = updatedMachines.reduce((sum, m) => sum + (parseFloat(m.vp) || 0), 0).toFixed(3);
+        const newTvd = updatedMachines.reduce((sum, m) => sum + (parseFloat(m.vd) || 0), 0).toFixed(3);
+        const newGt = (parseFloat(newTvp) + parseFloat(newTvd)).toFixed(3);
+        
+        try {
+            await db.from('reports').update({
+                machines: updatedMachines,
+                tqp: newTqp,
+                tqd: newTqd,
+                tvp: newTvp,
+                tvd: newTvd,
+                gt: newGt,
+                corrected_by: state.user.name
+            }).eq('id', reportId);
+            showSyncBadge();
+            await loadReports();
+            alert('✅ Makine değerleri güncellendi!');
+        } catch (error) {
+            console.error('Güncelleme hatası:', error);
+            alert('❌ Güncelleme hatası: ' + error.message);
         }
     };
 
