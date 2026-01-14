@@ -175,53 +175,40 @@
 
     // ==================== CLAUDE AI ANALYSIS (via Vercel Edge Function) ====================
     async function analyzeWithClaude(imageUrl) {
-        // 3 deneme yap
-        for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-                console.log(`AI analiz deneme ${attempt}...`, imageUrl);
+        return new Promise((resolve) => {
+            console.log('AI analiz başlıyor...', imageUrl);
+            
+            // 5 saniye bekle
+            setTimeout(() => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/analyze', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.timeout = 60000; // 60 saniye timeout
                 
-                // Cloudinary'nin fotoğrafı işlemesi için bekle
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                xhr.onload = function() {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        console.log('AI yanıt:', data);
+                        resolve(data.result || null);
+                    } catch (e) {
+                        console.error('AI parse hatası:', e);
+                        resolve(null);
+                    }
+                };
                 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 saniye timeout
+                xhr.onerror = function() {
+                    console.error('AI network hatası');
+                    resolve(null);
+                };
                 
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageUrl }),
-                    signal: controller.signal
-                });
+                xhr.ontimeout = function() {
+                    console.error('AI timeout');
+                    resolve(null);
+                };
                 
-                clearTimeout(timeoutId);
-                
-                const data = await response.json();
-                console.log('AI yanıt:', data);
-                
-                if (data.error) {
-                    console.error('AI hatası:', data.error);
-                    if (attempt < 3) continue; // Tekrar dene
-                    return null;
-                }
-                
-                if (data.result !== null) {
-                    return data.result;
-                }
-                
-                // null döndüyse tekrar dene
-                if (attempt < 3) {
-                    console.log('AI null döndü, tekrar deneniyor...');
-                    continue;
-                }
-                
-                return null;
-            } catch (error) {
-                console.error(`AI analiz hatası (deneme ${attempt}):`, error);
-                if (attempt < 3) continue;
-                return null;
-            }
-        }
-        return null;
+                xhr.send(JSON.stringify({ imageUrl }));
+            }, 5000);
+        });
     }
 
     // ==================== VERIFICATION ====================
