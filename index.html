@@ -178,36 +178,33 @@
         return new Promise((resolve) => {
             console.log('AI analiz başlıyor...', imageUrl);
             
-            // 5 saniye bekle
-            setTimeout(() => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '/api/analyze', true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.timeout = 60000; // 60 saniye timeout
-                
-                xhr.onload = function() {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-                        console.log('AI yanıt:', data);
-                        resolve(data.result || null);
-                    } catch (e) {
-                        console.error('AI parse hatası:', e);
-                        resolve(null);
-                    }
-                };
-                
-                xhr.onerror = function() {
-                    console.error('AI network hatası');
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/analyze', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.timeout = 30000; // 30 saniye timeout
+            
+            xhr.onload = function() {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    console.log('AI yanıt:', data);
+                    resolve(data.result || null);
+                } catch (e) {
+                    console.error('AI parse hatası:', e);
                     resolve(null);
-                };
-                
-                xhr.ontimeout = function() {
-                    console.error('AI timeout');
-                    resolve(null);
-                };
-                
-                xhr.send(JSON.stringify({ imageUrl }));
-            }, 5000);
+                }
+            };
+            
+            xhr.onerror = function() {
+                console.error('AI network hatası');
+                resolve(null);
+            };
+            
+            xhr.ontimeout = function() {
+                console.error('AI timeout');
+                resolve(null);
+            };
+            
+            xhr.send(JSON.stringify({ imageUrl }));
         });
     }
 
