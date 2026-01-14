@@ -170,6 +170,9 @@
     // ==================== CLAUDE AI ANALYSIS (via Vercel Edge Function) ====================
     async function analyzeWithClaude(imageUrl) {
         try {
+            // Cloudinary'nin fotoğrafı işlemesi için 2 saniye bekle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
