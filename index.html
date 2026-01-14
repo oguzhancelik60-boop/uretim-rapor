@@ -106,6 +106,7 @@
         lang: localStorage.getItem('lang') || 'tr',
         loggedIn: false,
         user: null,
+        activeProses: null,
         tab: 'giris',
         shift: 'sabah',
         date: new Date().toISOString().split('T')[0],
@@ -117,6 +118,15 @@
         loading: false,
         saving: false
     };
+
+    const PROSESLER = [
+        { id: 'agac_kabul', name: { tr: 'Ağaç Kabul', ru: 'Приём Дерева', kk: 'Ағаш қабылдау' }, icon: '🌳', color: 'bg-green-500', active: false },
+        { id: 'papel_soyma', name: { tr: 'Papel Soyma', ru: 'Резка Шпона', kk: 'Қабат кесу' }, icon: '✂️', color: 'bg-yellow-500', active: false },
+        { id: 'kurutma', name: { tr: 'Kurutma', ru: 'Сушка', kk: 'Кептіру' }, icon: '🔥', color: 'bg-orange-500', active: true },
+        { id: 'papel_ekleme', name: { tr: 'Papel Ekleme', ru: 'Добавление Шпона', kk: 'Қабат қосу' }, icon: '➕', color: 'bg-blue-500', active: false },
+        { id: 'tutkallama', name: { tr: 'Tutkallama', ru: 'Склеивание', kk: 'Желімдеу' }, icon: '💧', color: 'bg-purple-500', active: false },
+        { id: 'depo', name: { tr: 'Depo', ru: 'Склад', kk: 'Қойма' }, icon: '📦', color: 'bg-indigo-500', active: false }
+    ];
 
     const T = {
         tr: { title: 'Üretim Rapor Sistemi', login: 'Giriş Yap', logout: 'Çıkış', username: 'Kullanıcı Adı', password: 'Şifre', welcome: 'Hoş geldiniz', dataEntry: 'Veri Girişi', reports: 'Raporlar', shift: 'Vardiya', morning: 'Sabah', evening: 'Akşam', machine: 'Makine', width: 'En', length: 'Boy', thickness: 'Kalınlık', poperechny: 'Поперечный', prodolny: 'Продольный', save: 'Raporu Kaydet', saved: 'Rapor kaydedildi!', total: 'Toplam', grandTotal: 'Genel Toplam', volume: 'Hacim', qty: 'Adet', noReports: 'Henüz rapor yok', filter: 'Filtrele', showAll: 'Tümü', startDate: 'Başlangıç', endDate: 'Bitiş', exportExcel: 'Excel', reportDate: 'Rapor Tarihi', demo: 'Demo Kullanıcılar', mm: 'mm', standard: 'Standart', loading: 'Yükleniyor...', saving: 'Kaydediliyor...', refresh: 'Yenile', takePhoto: 'Fotoğraf', verified: 'Doğrulandı', mismatch: 'Uyumsuz', correct: 'Düzelt', warn: 'Uyarı Kaydet', totalSummary: 'Toplam Özet', mismatchCount: 'uyumsuz rapor', operatorData: 'Operatör verisi esas alındı', analyzing: 'AI Analiz Ediyor...' },
@@ -452,12 +462,58 @@
         }
 
         // MAIN APP
+        // Proses seçilmemişse proses listesi göster
+        if (!state.activeProses) {
+            app.innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100">
+                    <div class="bg-white shadow-lg">
+                        <div class="max-w-4xl mx-auto p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-indigo-900">🏭 ${t('title')}</h1>
+                                    <p class="text-gray-600">${t('welcome')}, <span class="font-semibold">${state.user.name}</span></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex bg-gray-100 rounded-lg p-1">
+                                        <button onclick="changeLang('tr')" class="px-3 py-1 rounded ${state.lang==='tr'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇹🇷</button>
+                                        <button onclick="changeLang('ru')" class="px-3 py-1 rounded ${state.lang==='ru'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇷🇺</button>
+                                        <button onclick="changeLang('kk')" class="px-3 py-1 rounded ${state.lang==='kk'?'bg-white shadow text-indigo-700 font-bold':'text-gray-600'}">🇰🇿</button>
+                                    </div>
+                                    <button onclick="doLogout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">${t('logout')}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="max-w-4xl mx-auto p-4">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            ${PROSESLER.map(p => {
+                                const hasAccess = state.user.permissions.includes(p.id);
+                                return `
+                                    <div onclick="${hasAccess && p.active ? `selectProses('${p.id}')` : ''}" 
+                                         class="bg-white rounded-2xl shadow-lg p-6 transition-all ${hasAccess && p.active ? 'cursor-pointer hover:shadow-xl hover:scale-105' : ''} ${!hasAccess ? 'opacity-50' : ''} ${!p.active ? 'border-2 border-dashed border-gray-300' : ''}">
+                                        <div class="text-center">
+                                            <div class="${p.color} w-16 h-16 rounded-xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-lg">${p.icon}</div>
+                                            <h3 class="font-bold text-gray-800">${p.name[state.lang]}</h3>
+                                            ${!p.active ? `<p class="text-xs text-amber-600 mt-1">⏳ Yakında</p>` : ''}
+                                            ${!hasAccess && p.active ? `<p class="text-xs text-red-500 mt-1">🔒 Yetki Yok</p>` : ''}
+                                            ${hasAccess && p.active ? `<p class="text-xs text-green-600 mt-1">✓ Giriş</p>` : ''}
+                                        </div>
+                                    </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        // KURUTMA EKRANI
         const filteredReports = state.filtering ? state.reports.filter(r => {
             const d = r.date.split(' ')[0];
             return (!state.filterStart || d >= state.filterStart) && (!state.filterEnd || d <= state.filterEnd);
         }) : state.reports;
 
         const periodTotals = calculatePeriodTotals(filteredReports);
+        const currentProses = PROSESLER.find(p => p.id === state.activeProses);
 
         app.innerHTML = `
             <div class="min-h-screen bg-gradient-to-br from-slate-100 to-orange-50 pb-8">
@@ -465,9 +521,12 @@
                 <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
                     <div class="max-w-4xl mx-auto p-4">
                         <div class="flex justify-between items-center">
-                            <div>
-                                <h1 class="text-xl font-bold">🔥 Kurutma</h1>
-                                <p class="text-sm text-orange-100">${state.user.name} ${state.user.isAdmin ? '👑' : ''}</p>
+                            <div class="flex items-center gap-3">
+                                <button onclick="goBack()" class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-xl">← Geri</button>
+                                <div>
+                                    <h1 class="text-xl font-bold">${currentProses.icon} ${currentProses.name[state.lang]}</h1>
+                                    <p class="text-sm text-orange-100">${state.user.name} ${state.user.isAdmin ? '👑' : ''}</p>
+                                </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="flex bg-white/20 rounded-lg p-1">
@@ -519,26 +578,36 @@
             <!-- Machines -->
             ${state.machines.map(m => `
                 <div class="bg-white rounded-2xl shadow-lg p-4 mb-3 border-l-4 border-orange-400">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
-                            <span class="font-bold text-lg">${t('machine')} ${m.id}</span>
-                        </div>
-                        
-                        <!-- Photo Button -->
-                        <label class="cursor-pointer">
-                            <div class="flex items-center gap-2 ${m.photoPreview ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'} px-3 py-2 rounded-xl">
-                                ${m.photoPreview ? '✅' : '📸'} ${t('takePhoto')}
+                    <!-- Header -->
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg">${m.id}</div>
+                        <span class="font-bold text-lg">${t('machine')} ${m.id}</span>
+                    </div>
+                    
+                    <!-- Photo Buttons - Kamera ve Galeri ayrı -->
+                    <div class="flex gap-2 mb-3">
+                        <label class="cursor-pointer flex-1">
+                            <div class="w-full py-3 rounded-xl text-center font-semibold ${m.photoPreview ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}">
+                                📷 Kamera
                             </div>
                             <input type="file" accept="image/*" capture="environment" onchange="handleMachinePhoto(${m.id}, this)" class="hidden">
                         </label>
+                        <label class="cursor-pointer flex-1">
+                            <div class="w-full py-3 rounded-xl text-center font-semibold ${m.photoPreview ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}">
+                                🖼️ Galeri
+                            </div>
+                            <input type="file" accept="image/*" onchange="handleMachinePhoto(${m.id}, this)" class="hidden">
+                        </label>
                     </div>
+                    
+                    <!-- Photo Status -->
+                    ${m.photoPreview ? `<div class="text-center text-green-600 text-sm mb-2">✅ Fotoğraf eklendi</div>` : ''}
                     
                     <!-- Photo Preview -->
                     ${m.photoPreview ? `
                         <div class="mb-3 relative">
                             <img src="${m.photoPreview}" class="w-full h-32 object-cover rounded-xl border-2 border-green-300">
-                            <button onclick="clearMachinePhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">✕</button>
+                            <button onclick="clearMachinePhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full text-xl">✕</button>
                         </div>
                     ` : ''}
                     
@@ -758,9 +827,11 @@
             document.getElementById('loginError').classList.remove('hidden'); 
             return; 
         }
-        state.user = user; state.loggedIn = true; render(); loadReports();
+        state.user = user; state.loggedIn = true; render();
     };
-    window.doLogout = () => { state.loggedIn = false; state.user = null; state.tab = 'giris'; render(); };
+    window.doLogout = () => { state.loggedIn = false; state.user = null; state.activeProses = null; state.tab = 'giris'; render(); };
+    window.selectProses = async (id) => { state.activeProses = id; state.tab = 'giris'; render(); await loadReports(); };
+    window.goBack = () => { state.activeProses = null; render(); };
     window.setTab = (t) => { state.tab = t; render(); };
     window.setShift = (s) => { state.shift = s; render(); };
     window.setDate = (d) => { state.date = d; render(); };
