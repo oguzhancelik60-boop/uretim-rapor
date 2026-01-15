@@ -19,7 +19,7 @@ export default async function handler(req) {
   }
 
   try {
-    const { imageUrl } = await req.json();
+    const { imageUrl, prompt } = await req.json();
 
     if (!imageUrl) {
       return new Response(JSON.stringify({ error: 'imageUrl required' }), {
@@ -27,6 +27,14 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Default prompt covers both Kurutma and Papel machines
+    const defaultPrompt = `Bu bir fabrika makine ekranının fotoğrafı. 
+Eğer "VENEER SHEET COUNTER" görüyorsan o değeri oku.
+Eğer "Ürün Sayısı" görüyorsan o değeri oku.
+Sadece sayıyı döndür. Örnek: 623
+Eğer bulamazsan "null" yaz.
+Sadece sayı veya null yaz, başka bir şey yazma.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -42,7 +50,7 @@ export default async function handler(req) {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'url', url: imageUrl } },
-            { type: 'text', text: `Bu bir fabrika makine ekranının fotoğrafı. "Ürün Sayısı" değerini bul ve sadece sayıyı döndür. Örnek: 4191. Eğer bulamazsan "null" yaz. Sadece sayı veya null yaz, başka bir şey yazma.` }
+            { type: 'text', text: prompt || defaultPrompt }
           ]
         }]
       })
