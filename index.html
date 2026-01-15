@@ -160,26 +160,22 @@ async function uploadPhoto(file) {
 }
 
 async function analyzePhoto(url, type) {
-    const prompt = type === 'papel'
-        ? 'Bu fotoğrafta bir ребросклейка makinesi ekranı var. VENEER SHEET COUNTER değerini bul ve SADECE sayıyı döndür.'
-        : 'Bu fotoğrafta bir kurutma makinesi sayaç ekranı var. Toplam adet sayısını bul ve SADECE sayıyı döndür.';
     try {
         const r = await fetch('/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageUrl: url, prompt })
+            body: JSON.stringify({ imageUrl: url })
         });
         const d = await r.json();
-        const num = parseInt(d.result);
-        return isNaN(num) ? null : num;
+        return d.result !== undefined ? d.result : null;
     } catch (e) { return null; }
 }
 
 function verify(entered, aiRead) {
-    if (aiRead === null) return { status: 'unknown', icon: '⚪', color: 'gray' };
+    if (aiRead === null || aiRead === undefined) return { status: 'unknown', icon: '⚪', color: 'gray', entered, aiRead: null, diff: null };
     const diff = Math.abs(entered - aiRead);
-    if (diff <= 5) return { status: 'verified', icon: '✅', color: 'green', diff };
-    return { status: 'mismatch', icon: '❌', color: 'red', diff, entered, aiRead };
+    if (diff <= 5) return { status: 'verified', icon: '✅', color: 'green', entered, aiRead, diff };
+    return { status: 'mismatch', icon: '❌', color: 'red', entered, aiRead, diff };
 }
 
 async function loadReports() {
@@ -483,6 +479,14 @@ function renderPapelEntry() {
 }
 
 function renderPapelReports(list) {
+    // Calculate totals for period
+    const totals = list.reduce((acc, r) => ({
+        pop: acc.pop + (r.sokrasina_shpon || 0),
+        prod: acc.prod + (r.suyuna_shpon || 0),
+        shpon: acc.shpon + (r.total_shpon || 0),
+        vol: acc.vol + parseFloat(r.gt || 0)
+    }), { pop: 0, prod: 0, shpon: 0, vol: 0 });
+
     return `
     <div class="bg-white rounded-2xl shadow p-3 mb-3">
         <div class="grid grid-cols-3 gap-2 mb-2">
@@ -493,31 +497,94 @@ function renderPapelReports(list) {
         <div class="flex gap-2">
             ${S.filtering ? '<button onclick="clearFilter()" class="flex-1 bg-gray-400 text-white py-2 rounded-lg text-xs">Все</button>' : ''}
             <button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs">🔄</button>
-            <button onclick="exportP()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊</button>
+            <button onclick="exportP()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊 Excel</button>
         </div>
     </div>
+    
+    ${list.length > 0 ? `
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 mb-3 text-white">
+        <div class="text-center text-sm mb-2 opacity-80">📊 Итого за период (${list.length} отчётов)</div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white/20 rounded-xl p-2">
+                <div class="text-xs opacity-80">↔️ Поп.</div>
+                <div class="text-lg font-bold">${totals.pop}</div>
+            </div>
+            <div class="bg-white/20 rounded-xl p-2">
+                <div class="text-xs opacity-80">↕️ Прод.</div>
+                <div class="text-lg font-bold">${totals.prod}</div>
+            </div>
+            <div class="bg-white/20 rounded-xl p-2">
+                <div class="text-xs opacity-80">Объём</div>
+                <div class="text-lg font-bold">${totals.vol.toFixed(3)} m³</div>
+            </div>
+        </div>
+        <div class="bg-white/30 rounded-xl p-2 mt-2 text-center">
+            <span class="text-sm">📄 Всего Шпон: </span>
+            <span class="text-xl font-bold">${totals.shpon} шт</span>
+        </div>
+    </div>` : ''}
+    
     ${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#3B82F6;width:32px;height:32px"></div></div>' :
     list.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет отчётов</div>' :
-    list.map(r => `
-    <div class="bg-white rounded-2xl shadow p-3 mb-2 border-l-4 border-${r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray'}-400">
-        <div class="flex justify-between items-start mb-2">
+    list.map(r => {
+        const v = r.verifications || [];
+        const hasAI = v.length > 0;
+        const statusColor = r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray';
+        const statusIcon = r.verification_status === 'verified' ? '✅' : r.verification_status === 'mismatch' ? '❌' : '⚪';
+        
+        return `
+    <div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-${statusColor}-400">
+        <div class="flex justify-between items-start mb-3">
             <div>
-                <div class="font-semibold">${r.date}</div>
-                <div class="text-xs text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user_name}</div>
+                <div class="font-bold text-gray-800">${r.date}</div>
+                <div class="text-sm text-gray-500">${r.shift === 'sabah' ? '🌅 Утро' : '🌙 Вечер'} • ${r.user_name}</div>
             </div>
             <div class="flex items-center gap-2">
-                <span class="text-xs px-2 py-1 rounded-full bg-${r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray'}-100">
-                    ${r.verification_status === 'verified' ? '✅' : r.verification_status === 'mismatch' ? '❌' : '⚪'}
-                </span>
-                ${S.user.isAdmin ? `<button onclick="deleteP(${r.id})" class="text-red-500 text-xs">🗑️</button>` : ''}
+                <span class="text-lg">${statusIcon}</span>
+                ${S.user.isAdmin ? `<button onclick="deleteP(${r.id})" class="text-red-400 hover:text-red-600 p-1">🗑️</button>` : ''}
             </div>
         </div>
-        <div class="flex gap-2 text-center text-sm">
-            <div class="flex-1 bg-blue-50 rounded-lg p-2"><div class="text-xs text-blue-600">↔️ Поп.</div><div class="font-bold text-blue-700">${r.sokrasina_shpon || 0}</div></div>
-            <div class="flex-1 bg-green-50 rounded-lg p-2"><div class="text-xs text-green-600">↕️ Прод.</div><div class="font-bold text-green-700">${r.suyuna_shpon || 0}</div></div>
-            <div class="flex-1 bg-indigo-50 rounded-lg p-2"><div class="text-xs text-indigo-600">Объём</div><div class="font-bold text-indigo-700">${r.gt} m³</div></div>
+        
+        <div class="grid grid-cols-3 gap-2 mb-3">
+            <div class="bg-blue-50 rounded-xl p-3 text-center">
+                <div class="text-xs text-blue-600 mb-1">↔️ Поперечный</div>
+                <div class="text-xl font-bold text-blue-700">${r.sokrasina_shpon || 0}</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3 text-center">
+                <div class="text-xs text-green-600 mb-1">↕️ Продольный</div>
+                <div class="text-xl font-bold text-green-700">${r.suyuna_shpon || 0}</div>
+            </div>
+            <div class="bg-indigo-50 rounded-xl p-3 text-center">
+                <div class="text-xs text-indigo-600 mb-1">Объём</div>
+                <div class="text-xl font-bold text-indigo-700">${r.gt} m³</div>
+            </div>
         </div>
-    </div>`).join('')}`;
+        
+        <div class="bg-gray-50 rounded-xl p-2 text-center mb-2">
+            <span class="text-sm text-gray-600">📄 Всего: </span>
+            <span class="font-bold text-gray-800">${r.total_shpon || 0} шт</span>
+        </div>
+        
+        ${hasAI ? `
+        <div class="border-t pt-3 mt-2">
+            <div class="text-xs text-gray-500 mb-2">🤖 AI Проверка:</div>
+            ${v.map(item => {
+                const machName = item.type === 'poperechny' ? '↔️ Поп.' : '↕️ Прод.';
+                const diff = item.diff !== null && item.diff !== undefined ? item.diff : '-';
+                const itemColor = item.status === 'verified' ? 'green' : item.status === 'mismatch' ? 'red' : 'gray';
+                const aiVal = item.aiRead !== null && item.aiRead !== undefined ? item.aiRead : '-';
+                const entVal = item.entered !== null && item.entered !== undefined ? item.entered : '-';
+                return `
+                <div class="flex justify-between items-center text-sm bg-${itemColor}-50 rounded-lg p-2 mb-1">
+                    <span class="text-gray-600">${machName}</span>
+                    <span>Ввод: <b>${entVal}</b></span>
+                    <span>AI: <b>${aiVal}</b></span>
+                    <span class="text-${itemColor}-600 font-semibold">Δ${diff}</span>
+                </div>`;
+            }).join('')}
+        </div>` : ''}
+    </div>`;
+    }).join('')}`;
 }
 
 // EVENT HANDLERS
