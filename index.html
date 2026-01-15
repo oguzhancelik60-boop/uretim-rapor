@@ -45,24 +45,13 @@
     <div id="syncBadge" class="sync-badge">☁️ Sync</div>
     <div id="app"></div>
 <script>
+// CONFIG
 const SUPABASE_URL = 'https://exxznkibcoyaemlqmcon.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4eHpua2liY295YWVtbHFtY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTk4MzMsImV4cCI6MjA4MzY5NTgzM30.AqAud6Mo6x1sy7FB_at8f2BnTZSVsytXHXC_b5WX0yQ';
 const CLOUDINARY_CLOUD = 'de8orxjfy';
 const CLOUDINARY_PRESET = 'uretim_unsigned';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Offline
-const getPending = () => JSON.parse(localStorage.getItem('pending') || '[]');
-const savePending = r => { const p = getPending(); p.push({...r, pid: Date.now()}); localStorage.setItem('pending', JSON.stringify(p)); updatePendingBadge(); };
-const removePending = id => { localStorage.setItem('pending', JSON.stringify(getPending().filter(r => r.pid !== id))); updatePendingBadge(); };
-const updatePendingBadge = () => { const p = getPending(), b = document.getElementById('pendingBadge'), c = document.getElementById('pendingCount'); if(b && c) { p.length > 0 ? (b.classList.add('show'), c.textContent = p.length) : b.classList.remove('show'); }};
-const syncPending = async () => { if(!navigator.onLine) return alert('Нет интернета'); const p = getPending(); let s = 0; for(const r of p) { const t = r.type === 'papel' ? 'papel_ekleme_reports' : 'reports'; const {error} = await db.from(t).insert([r.data]); if(!error) { removePending(r.pid); s++; }} if(s) { showSync(); loadReports(); alert('✅ ' + s + ' синхронизировано!'); }};
-window.addEventListener('online', () => { updateOnline(); if(getPending().length) setTimeout(syncPending, 2000); });
-window.addEventListener('offline', updateOnline);
-const updateOnline = () => { const b = document.getElementById('offlineBadge'); if(b) navigator.onLine ? b.classList.remove('show') : b.classList.add('show'); };
-const showSync = () => { const b = document.getElementById('syncBadge'); if(b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 2000); }};
-
-// Config
 const STANDART = { en: '1250', boy: '2500', kalinlik: '1.5' };
 const USERS = {
     'admin': { password: 'admin123', name: 'Администратор', isAdmin: true, perms: ['kurutma', 'papel'] },
@@ -79,6 +68,7 @@ const PROSES = [
     { id: 'depo', name: 'Склад', icon: '📦', color: 'bg-indigo-500', active: false }
 ];
 
+// STATE
 const createKurutma = () => [1,2,3,4].map(id => ({ id, ...STANDART, qp: '', qd: '', photo: null, preview: null, aiResult: null }));
 const createPapel = () => [
     { id: 1, type: 'poperechny', name: 'Поперечный', icon: '↔️', color: 'blue', ...STANDART, shpon: '', photo: null, preview: null, aiResult: null },
@@ -93,34 +83,86 @@ let S = {
     fStart: '', fEnd: '', filtering: false, loading: false, saving: false
 };
 
-// Calculations
-const calcVol = (m, t) => { const e = parseFloat(m.en)||0, b = parseFloat(m.boy)||0, k = parseFloat(m.kalinlik)||0, q = parseFloat(t === 'p' ? m.qp : m.qd)||0; return ((e/1000)*(b/1000)*(k/1000)*q).toFixed(3); };
-const totalVol = t => S.kurutma.reduce((s, m) => s + parseFloat(calcVol(m, t)), 0).toFixed(3);
-const totalQty = t => S.kurutma.reduce((s, m) => s + (parseFloat(t === 'p' ? m.qp : m.qd)||0), 0);
-const grandTotal = () => (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3);
+// HELPER FUNCTIONS
+function updateOnline() {
+    const b = document.getElementById('offlineBadge');
+    if (b) navigator.onLine ? b.classList.remove('show') : b.classList.add('show');
+}
 
-const calcPapelVol = m => { const e = parseFloat(m.en)||0, b = parseFloat(m.boy)||0, k = parseFloat(m.kalinlik)||0, q = parseFloat(m.shpon)||0; return ((e/1000)*(b/1000)*(k/1000)*q).toFixed(3); };
-const totalShpon = () => S.papel.reduce((s, m) => s + (parseFloat(m.shpon)||0), 0);
-const grandPapelTotal = () => S.papel.reduce((s, m) => s + parseFloat(calcPapelVol(m)), 0).toFixed(3);
+function updatePendingBadge() {
+    const p = getPending();
+    const b = document.getElementById('pendingBadge');
+    const c = document.getElementById('pendingCount');
+    if (b && c) {
+        if (p.length > 0) { b.classList.add('show'); c.textContent = p.length; }
+        else { b.classList.remove('show'); }
+    }
+}
 
-// Cloud
-const uploadPhoto = async file => {
+function showSync() {
+    const b = document.getElementById('syncBadge');
+    if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 2000); }
+}
+
+function showToast() {
+    const t = document.getElementById('toast');
+    if (t) { t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); }
+}
+
+// OFFLINE
+function getPending() { return JSON.parse(localStorage.getItem('pending') || '[]'); }
+function savePending(r) { const p = getPending(); p.push({...r, pid: Date.now()}); localStorage.setItem('pending', JSON.stringify(p)); updatePendingBadge(); }
+function removePending(id) { localStorage.setItem('pending', JSON.stringify(getPending().filter(r => r.pid !== id))); updatePendingBadge(); }
+
+async function syncPending() {
+    if (!navigator.onLine) return alert('Нет интернета');
+    const p = getPending();
+    let s = 0;
+    for (const r of p) {
+        const t = r.type === 'papel' ? 'papel_ekleme_reports' : 'reports';
+        const { error } = await db.from(t).insert([r.data]);
+        if (!error) { removePending(r.pid); s++; }
+    }
+    if (s) { showSync(); loadReports(); alert('✅ ' + s + ' синхронизировано!'); }
+}
+
+window.addEventListener('online', () => { updateOnline(); if (getPending().length) setTimeout(syncPending, 2000); });
+window.addEventListener('offline', updateOnline);
+
+// CALCULATIONS
+function calcVol(m, t) {
+    const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0;
+    const q = parseFloat(t === 'p' ? m.qp : m.qd) || 0;
+    return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3);
+}
+function totalVol(t) { return S.kurutma.reduce((s, m) => s + parseFloat(calcVol(m, t)), 0).toFixed(3); }
+function totalQty(t) { return S.kurutma.reduce((s, m) => s + (parseFloat(t === 'p' ? m.qp : m.qd) || 0), 0); }
+function grandTotal() { return (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3); }
+
+function calcPapelVol(m) {
+    const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0;
+    const q = parseFloat(m.shpon) || 0;
+    return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3);
+}
+function totalShpon() { return S.papel.reduce((s, m) => s + (parseFloat(m.shpon) || 0), 0); }
+function grandPapelTotal() { return S.papel.reduce((s, m) => s + parseFloat(calcPapelVol(m)), 0).toFixed(3); }
+
+// CLOUD
+async function uploadPhoto(file) {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('upload_preset', CLOUDINARY_PRESET);
     try {
-        const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
+        const r = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method: 'POST', body: fd });
         const d = await r.json();
         return d.secure_url || null;
-    } catch(e) { return null; }
-};
+    } catch (e) { return null; }
+}
 
-const analyzePhoto = async (url, type) => {
-    // type: 'kurutma' veya 'papel'
-    const prompt = type === 'papel' 
-        ? 'Bu fotoğrafta bir ребросклейка (veneer splicing) makinesi ekranı var. "VENEER SHEET COUNTER" değerini bul ve SADECE sayıyı döndür. Örnek yanıt: 623'
-        : 'Bu fotoğrafta bir kurutma makinesi sayaç ekranı var. Ekrandaki toplam adet sayısını bul ve SADECE sayıyı döndür. Örnek yanıt: 450';
-    
+async function analyzePhoto(url, type) {
+    const prompt = type === 'papel'
+        ? 'Bu fotoğrafta bir ребросклейка makinesi ekranı var. VENEER SHEET COUNTER değerini bul ve SADECE sayıyı döndür.'
+        : 'Bu fotoğrafta bir kurutma makinesi sayaç ekranı var. Toplam adet sayısını bul ve SADECE sayıyı döndür.';
     try {
         const r = await fetch('/api/analyze', {
             method: 'POST',
@@ -130,17 +172,17 @@ const analyzePhoto = async (url, type) => {
         const d = await r.json();
         const num = parseInt(d.result);
         return isNaN(num) ? null : num;
-    } catch(e) { return null; }
-};
+    } catch (e) { return null; }
+}
 
-const verify = (entered, aiRead) => {
+function verify(entered, aiRead) {
     if (aiRead === null) return { status: 'unknown', icon: '⚪', color: 'gray' };
     const diff = Math.abs(entered - aiRead);
     if (diff <= 5) return { status: 'verified', icon: '✅', color: 'green', diff };
     return { status: 'mismatch', icon: '❌', color: 'red', diff, entered, aiRead };
-};
+}
 
-const loadReports = async () => {
+async function loadReports() {
     S.loading = true; render();
     try {
         if (S.proses === 'kurutma') {
@@ -151,15 +193,16 @@ const loadReports = async () => {
             if (data) S.papelReports = data;
         }
         showSync();
-    } catch(e) {}
+    } catch (e) { console.error(e); }
     S.loading = false; render();
-};
+}
 
-// RENDER
+// RENDER FUNCTIONS
 function render() {
     const app = document.getElementById('app');
     if (!app) return;
-    updateOnline(); updatePendingBadge();
+    updateOnline();
+    updatePendingBadge();
     
     if (!S.logged) { renderLogin(); return; }
     if (!S.proses) { renderProses(); return; }
@@ -478,30 +521,65 @@ function renderPapelReports(list) {
 }
 
 // EVENT HANDLERS
-window.doLogin = () => {
+window.doLogin = function() {
     const u = document.getElementById('username').value;
     const p = document.getElementById('password').value;
     const user = USERS[u];
     const err = document.getElementById('loginError');
-    if (!user || user.password !== p) { err.textContent = 'Неверные данные!'; err.classList.add('show'); return; }
-    S.user = user; S.logged = true; render();
+    if (!user || user.password !== p) {
+        err.textContent = 'Неверные данные!';
+        err.classList.add('show');
+        return;
+    }
+    S.user = user;
+    S.logged = true;
+    render();
 };
-window.doLogout = () => { S.logged = false; S.user = null; S.proses = null; S.tab = 'entry'; render(); };
-window.selectProses = async id => { S.proses = id; S.tab = 'entry'; render(); await loadReports(); };
-window.goBack = () => { S.proses = null; render(); };
-window.setTab = t => { S.tab = t; render(); };
-window.setShift = s => { S.shift = s; render(); };
-window.setDate = d => { S.date = d; render(); };
-window.applyFilter = () => { S.filtering = true; render(); };
-window.clearFilter = () => { S.fStart = ''; S.fEnd = ''; S.filtering = false; render(); };
 
-// KURUTMA
-window.updateK = (id, f, v) => { S.kurutma = S.kurutma.map(m => m.id === id ? {...m, [f]: v} : m); render(); };
-window.handleKPhoto = (id, input) => { const file = input.files[0]; if (!file) return; S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m); render(); };
-window.clearKPhoto = id => { S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m); render(); };
+window.doLogout = function() {
+    S.logged = false;
+    S.user = null;
+    S.proses = null;
+    S.tab = 'entry';
+    render();
+};
 
-window.saveKurutma = async () => {
-    S.saving = true; render();
+window.selectProses = async function(id) {
+    S.proses = id;
+    S.tab = 'entry';
+    render();
+    await loadReports();
+};
+
+window.goBack = function() { S.proses = null; render(); };
+window.setTab = function(t) { S.tab = t; render(); };
+window.setShift = function(s) { S.shift = s; render(); };
+window.setDate = function(d) { S.date = d; render(); };
+window.applyFilter = function() { S.filtering = true; render(); };
+window.clearFilter = function() { S.fStart = ''; S.fEnd = ''; S.filtering = false; render(); };
+
+// KURUTMA HANDLERS
+window.updateK = function(id, f, v) {
+    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, [f]: v} : m);
+    render();
+};
+
+window.handleKPhoto = function(id, input) {
+    const file = input.files[0];
+    if (!file) return;
+    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m);
+    render();
+};
+
+window.clearKPhoto = function(id) {
+    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m);
+    render();
+};
+
+window.saveKurutma = async function() {
+    S.saving = true;
+    render();
+    
     const photos = {}, aiResults = {}, verifications = [];
     
     for (const m of S.kurutma) {
@@ -519,7 +597,6 @@ window.saveKurutma = async () => {
     }
     
     const hasAny = verifications.length > 0;
-    const allVerified = hasAny && verifications.every(v => v.status === 'verified');
     const hasMismatch = verifications.some(v => v.status === 'mismatch');
     const status = !hasAny ? 'unknown' : hasMismatch ? 'mismatch' : 'verified';
     
@@ -539,7 +616,7 @@ window.saveKurutma = async () => {
     if (navigator.onLine) {
         const { error } = await db.from('reports').insert([report]);
         if (!error) { showSync(); await loadReports(); }
-        else savePending({ type: 'kurutma', data: report });
+        else { savePending({ type: 'kurutma', data: report }); }
     } else {
         savePending({ type: 'kurutma', data: report });
     }
@@ -550,21 +627,45 @@ window.saveKurutma = async () => {
     showToast();
 };
 
-window.deleteK = async id => { if (confirm('Удалить?')) { await db.from('reports').delete().eq('id', id); loadReports(); }};
-window.exportK = () => {
+window.deleteK = async function(id) {
+    if (confirm('Удалить?')) {
+        await db.from('reports').delete().eq('id', id);
+        loadReports();
+    }
+};
+
+window.exportK = function() {
     let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп,Прод,Объём\n';
-    const list = S.filtering ? S.reports.filter(r => { const d = r.date?.split(' ')[0]; return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd); }) : S.reports;
+    const list = S.filtering ? S.reports.filter(r => {
+        const d = r.date?.split(' ')[0];
+        return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd);
+    }) : S.reports;
     list.forEach(r => { csv += `${r.date},${r.shift},${r.user_name},${r.tqp},${r.tqd},${r.gt}\n`; });
     downloadCSV(csv, 'kurutma');
 };
 
-// PAPEL
-window.updateP = (id, f, v) => { S.papel = S.papel.map(m => m.id === id ? {...m, [f]: v} : m); render(); };
-window.handlePPhoto = (id, input) => { const file = input.files[0]; if (!file) return; S.papel = S.papel.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m); render(); };
-window.clearPPhoto = id => { S.papel = S.papel.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m); render(); };
+// PAPEL HANDLERS
+window.updateP = function(id, f, v) {
+    S.papel = S.papel.map(m => m.id === id ? {...m, [f]: v} : m);
+    render();
+};
 
-window.savePapel = async () => {
-    S.saving = true; render();
+window.handlePPhoto = function(id, input) {
+    const file = input.files[0];
+    if (!file) return;
+    S.papel = S.papel.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m);
+    render();
+};
+
+window.clearPPhoto = function(id) {
+    S.papel = S.papel.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m);
+    render();
+};
+
+window.savePapel = async function() {
+    S.saving = true;
+    render();
+    
     const photos = {}, aiResults = {}, verifications = [];
     
     for (const m of S.papel) {
@@ -602,7 +703,7 @@ window.savePapel = async () => {
     if (navigator.onLine) {
         const { error } = await db.from('papel_ekleme_reports').insert([report]);
         if (!error) { showSync(); await loadReports(); }
-        else savePending({ type: 'papel', data: report });
+        else { savePending({ type: 'papel', data: report }); }
     } else {
         savePending({ type: 'papel', data: report });
     }
@@ -613,29 +714,33 @@ window.savePapel = async () => {
     showToast();
 };
 
-window.deleteP = async id => { if (confirm('Удалить?')) { await db.from('papel_ekleme_reports').delete().eq('id', id); loadReports(); }};
-window.exportP = () => {
+window.deleteP = async function(id) {
+    if (confirm('Удалить?')) {
+        await db.from('papel_ekleme_reports').delete().eq('id', id);
+        loadReports();
+    }
+};
+
+window.exportP = function() {
     let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп_шпон,Прод_шпон,Всего,Объём\n';
-    const list = S.filtering ? S.papelReports.filter(r => { const d = r.date?.split(' ')[0]; return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd); }) : S.papelReports;
+    const list = S.filtering ? S.papelReports.filter(r => {
+        const d = r.date?.split(' ')[0];
+        return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd);
+    }) : S.papelReports;
     list.forEach(r => { csv += `${r.date},${r.shift},${r.user_name},${r.sokrasina_shpon||0},${r.suyuna_shpon||0},${r.total_shpon||0},${r.gt}\n`; });
     downloadCSV(csv, 'papel');
 };
 
 // UTILS
-const downloadCSV = (csv, name) => {
+function downloadCSV(csv, name) {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${name}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = name + '_' + new Date().toISOString().split('T')[0] + '.csv';
     link.click();
-};
+}
 
-const showToast = () => {
-    const t = document.getElementById('toast');
-    if (t) { t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); }
-};
-
-// START
+// START APP
 render();
 </script>
 </body>
