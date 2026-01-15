@@ -138,10 +138,10 @@
     let state = { lang: localStorage.getItem('lang') || 'kk', loggedIn: false, user: null, activeProses: null, tab: 'giris', shift: 'sabah', date: new Date().toISOString().split('T')[0], machines: createDefaultMachines(), reports: [], filterStart: '', filterEnd: '', filtering: false, loading: false, saving: false };
 
     const PROSESLER = [
-        { id: 'agac_kabul', name: { tr: 'Ağaç Kabul', ru: 'Приём Дерева', kk: 'Ағаш қабылдау' }, icon: '🌳', color: 'bg-green-500', active: false },
-        { id: 'papel_soyma', name: { tr: 'Papel Soyma', ru: 'Резка Шпона', kk: 'Қабат кесу' }, icon: '✂️', color: 'bg-yellow-500', active: false },
+        { id: 'agac_kabul', name: { tr: 'Ağaç Kabul', ru: 'Приём леса', kk: 'Ағаш қабылдау' }, icon: '🌳', color: 'bg-green-500', active: false },
+        { id: 'papel_soyma', name: { tr: 'Papel Soyma', ru: 'Лущение шпона', kk: 'Қабат кесу' }, icon: '✂️', color: 'bg-yellow-500', active: false },
         { id: 'kurutma', name: { tr: 'Kurutma', ru: 'Сушка', kk: 'Кептіру' }, icon: '🔥', color: 'bg-orange-500', active: true },
-        { id: 'papel_ekleme', name: { tr: 'Papel Ekleme', ru: 'Добавление Шпона', kk: 'Қабат қосу' }, icon: '➕', color: 'bg-blue-500', active: false },
+        { id: 'papel_ekleme', name: { tr: 'Papel Ekleme', ru: 'Ребросклеивание', kk: 'Қабат қосу' }, icon: '➕', color: 'bg-blue-500', active: false },
         { id: 'tutkallama', name: { tr: 'Tutkallama', ru: 'Склеивание', kk: 'Желімдеу' }, icon: '💧', color: 'bg-purple-500', active: false },
         { id: 'depo', name: { tr: 'Depo', ru: 'Склад', kk: 'Қойма' }, icon: '📦', color: 'bg-indigo-500', active: false }
     ];
