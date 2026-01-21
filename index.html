@@ -7,6 +7,7 @@
     <title>NordPanels™</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; font-family: 'Segoe UI', system-ui, sans-serif; }
@@ -37,6 +38,16 @@
         .login-error.show { display: block; }
         .demo-box { margin-top: 16px; padding: 12px; background: #f9f9f9; border-radius: 10px; font-size: 11px; }
         .demo-item { background: white; padding: 6px 10px; border-radius: 6px; margin: 4px 0; font-family: monospace; }
+        .upload-zone { border: 3px dashed #22C55E; border-radius: 20px; padding: 40px 20px; text-align: center; background: #F0FDF4; cursor: pointer; transition: all 0.3s; }
+        .upload-zone:hover { background: #DCFCE7; border-color: #16A34A; }
+        .filter-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        .filter-chip.active { background: #22C55E; color: white; border-color: #22C55E; }
+        .filter-chip:not(.active) { background: white; color: #6b7280; border-color: #e5e7eb; }
+        .tomruk-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+        .tomruk-row:nth-child(odd) { background: #f9fafb; }
+        .tomruk-row:nth-child(even) { background: #f3f4f6; }
+        .detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 16px; }
+        .detail-content { background: white; border-radius: 24px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -45,7 +56,6 @@
     <div id="syncBadge" class="sync-badge">☁️ Sync</div>
     <div id="app"></div>
 <script>
-// CONFIG
 const SUPABASE_URL = 'https://exxznkibcoyaemlqmcon.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4eHpua2liY295YWVtbHFtY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxMTk4MzMsImV4cCI6MjA4MzY5NTgzM30.AqAud6Mo6x1sy7FB_at8f2BnTZSVsytXHXC_b5WX0yQ';
 const CLOUDINARY_CLOUD = 'de8orxjfy';
@@ -54,13 +64,13 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const STANDART = { en: '1250', boy: '2500', kalinlik: '1.5' };
 const USERS = {
-    'admin': { password: 'admin123', name: 'Администратор', isAdmin: true, perms: ['kurutma', 'papel'] },
+    'admin': { password: 'admin123', name: 'Администратор', isAdmin: true, perms: ['agac', 'kurutma', 'papel'] },
     'ali': { password: 'ali123', name: 'Али', isAdmin: false, perms: ['kurutma'] },
-    'mehmet': { password: 'mehmet123', name: 'Мехмет', isAdmin: false, perms: ['kurutma', 'papel'] },
+    'mehmet': { password: 'mehmet123', name: 'Мехмет', isAdmin: false, perms: ['agac', 'kurutma', 'papel'] },
     'ayse': { password: 'ayse123', name: 'Айше', isAdmin: false, perms: ['papel'] }
 };
 const PROSES = [
-    { id: 'agac', name: 'Приём леса', icon: '🌳', color: 'bg-green-500', active: false },
+    { id: 'agac', name: 'Приём леса', icon: '🌳', color: 'bg-green-500', active: true },
     { id: 'soyma', name: 'Лущение', icon: '✂️', color: 'bg-yellow-500', active: false },
     { id: 'kurutma', name: 'Сушка', icon: '🔥', color: 'bg-orange-500', active: true },
     { id: 'papel', name: 'Ребросклейка', icon: '➕', color: 'bg-blue-500', active: true },
@@ -68,7 +78,6 @@ const PROSES = [
     { id: 'depo', name: 'Склад', icon: '📦', color: 'bg-indigo-500', active: false }
 ];
 
-// STATE
 const createKurutma = () => [1,2,3,4].map(id => ({ id, ...STANDART, qp: '', qd: '', photo: null, preview: null, aiResult: null }));
 const createPapel = () => [
     { id: 1, type: 'poperechny', name: 'Поперечный', icon: '↔️', color: 'blue', ...STANDART, shpon: '', photo: null, preview: null, aiResult: null },
@@ -79,582 +88,253 @@ let S = {
     logged: false, user: null, proses: null, tab: 'entry', shift: 'sabah',
     date: new Date().toISOString().split('T')[0],
     kurutma: createKurutma(), papel: createPapel(),
-    reports: [], papelReports: [],
-    fStart: '', fEnd: '', filtering: false, loading: false, saving: false
+    reports: [], papelReports: [], agacReports: [],
+    fStart: '', fEnd: '', filtering: false, loading: false, saving: false,
+    agacFilters: { tedarikci: '', boy: '', cap: '' },
+    agacDetail: null, parsedExcel: null
 };
 
-// HELPER FUNCTIONS
-function updateOnline() {
-    const b = document.getElementById('offlineBadge');
-    if (b) navigator.onLine ? b.classList.remove('show') : b.classList.add('show');
-}
-
-function updatePendingBadge() {
-    const p = getPending();
-    const b = document.getElementById('pendingBadge');
-    const c = document.getElementById('pendingCount');
-    if (b && c) {
-        if (p.length > 0) { b.classList.add('show'); c.textContent = p.length; }
-        else { b.classList.remove('show'); }
-    }
-}
-
-function showSync() {
-    const b = document.getElementById('syncBadge');
-    if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 2000); }
-}
-
-function showToast() {
-    const t = document.getElementById('toast');
-    if (t) { t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); }
-}
-
-// OFFLINE
+function updateOnline() { const b = document.getElementById('offlineBadge'); if (b) navigator.onLine ? b.classList.remove('show') : b.classList.add('show'); }
+function updatePendingBadge() { const p = getPending(), b = document.getElementById('pendingBadge'), c = document.getElementById('pendingCount'); if (b && c) { if (p.length > 0) { b.classList.add('show'); c.textContent = p.length; } else b.classList.remove('show'); } }
+function showSync() { const b = document.getElementById('syncBadge'); if (b) { b.classList.add('show'); setTimeout(() => b.classList.remove('show'), 2000); } }
+function showToast(msg) { const t = document.getElementById('toast'); if (t) { t.textContent = msg || '✅ Сохранено!'; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); } }
 function getPending() { return JSON.parse(localStorage.getItem('pending') || '[]'); }
 function savePending(r) { const p = getPending(); p.push({...r, pid: Date.now()}); localStorage.setItem('pending', JSON.stringify(p)); updatePendingBadge(); }
 function removePending(id) { localStorage.setItem('pending', JSON.stringify(getPending().filter(r => r.pid !== id))); updatePendingBadge(); }
 
 async function syncPending() {
     if (!navigator.onLine) return alert('Нет интернета');
-    const p = getPending();
-    let s = 0;
+    const p = getPending(); let s = 0;
     for (const r of p) {
-        const t = r.type === 'papel' ? 'papel_ekleme_reports' : 'reports';
+        let t = r.type === 'papel' ? 'papel_ekleme_reports' : r.type === 'agac' ? 'agac_kabul_reports' : 'reports';
         const { error } = await db.from(t).insert([r.data]);
         if (!error) { removePending(r.pid); s++; }
     }
     if (s) { showSync(); loadReports(); alert('✅ ' + s + ' синхронизировано!'); }
 }
-
 window.addEventListener('online', () => { updateOnline(); if (getPending().length) setTimeout(syncPending, 2000); });
 window.addEventListener('offline', updateOnline);
 
-// CALCULATIONS
-function calcVol(m, t) {
-    const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0;
-    const q = parseFloat(t === 'p' ? m.qp : m.qd) || 0;
-    return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3);
-}
+function calcVol(m, t) { const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0, q = parseFloat(t === 'p' ? m.qp : m.qd) || 0; return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3); }
 function totalVol(t) { return S.kurutma.reduce((s, m) => s + parseFloat(calcVol(m, t)), 0).toFixed(3); }
 function totalQty(t) { return S.kurutma.reduce((s, m) => s + (parseFloat(t === 'p' ? m.qp : m.qd) || 0), 0); }
 function grandTotal() { return (parseFloat(totalVol('p')) + parseFloat(totalVol('d'))).toFixed(3); }
-
-function calcPapelVol(m) {
-    const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0;
-    const q = parseFloat(m.shpon) || 0;
-    return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3);
-}
+function calcPapelVol(m) { const e = parseFloat(m.en) || 0, b = parseFloat(m.boy) || 0, k = parseFloat(m.kalinlik) || 0, q = parseFloat(m.shpon) || 0; return ((e / 1000) * (b / 1000) * (k / 1000) * q).toFixed(3); }
 function totalShpon() { return S.papel.reduce((s, m) => s + (parseFloat(m.shpon) || 0), 0); }
 function grandPapelTotal() { return S.papel.reduce((s, m) => s + parseFloat(calcPapelVol(m)), 0).toFixed(3); }
 
-// CLOUD
-async function uploadPhoto(file) {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', CLOUDINARY_PRESET);
-    try {
-        const r = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method: 'POST', body: fd });
-        const d = await r.json();
-        return d.secure_url || null;
-    } catch (e) { return null; }
-}
-
-async function analyzePhoto(url, type) {
-    try {
-        const r = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageUrl: url })
-        });
-        const d = await r.json();
-        return d.result !== undefined ? d.result : null;
-    } catch (e) { return null; }
-}
-
-function verify(entered, aiRead) {
-    if (aiRead === null || aiRead === undefined) return { status: 'unknown', icon: '⚪', color: 'gray', entered, aiRead: null, diff: null };
-    const diff = Math.abs(entered - aiRead);
-    if (diff <= 5) return { status: 'verified', icon: '✅', color: 'green', entered, aiRead, diff };
-    return { status: 'mismatch', icon: '❌', color: 'red', entered, aiRead, diff };
-}
+async function uploadPhoto(file) { const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', CLOUDINARY_PRESET); try { const r = await fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method: 'POST', body: fd }); const d = await r.json(); return d.secure_url || null; } catch (e) { return null; } }
+async function analyzePhoto(url) { try { const r = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageUrl: url }) }); const d = await r.json(); return d.result !== undefined ? d.result : null; } catch (e) { return null; } }
+function verify(entered, aiRead) { if (aiRead === null || aiRead === undefined) return { status: 'unknown', icon: '⚪', color: 'gray', entered, aiRead: null, diff: null }; const diff = Math.abs(entered - aiRead); if (diff <= 5) return { status: 'verified', icon: '✅', color: 'green', entered, aiRead, diff }; return { status: 'mismatch', icon: '❌', color: 'red', entered, aiRead, diff }; }
 
 async function loadReports() {
     S.loading = true; render();
     try {
-        if (S.proses === 'kurutma') {
-            const { data } = await db.from('reports').select('*').order('created_at', { ascending: false });
-            if (data) S.reports = data;
-        } else if (S.proses === 'papel') {
-            const { data } = await db.from('papel_ekleme_reports').select('*').order('created_at', { ascending: false });
-            if (data) S.papelReports = data;
-        }
+        if (S.proses === 'kurutma') { const { data } = await db.from('reports').select('*').order('created_at', { ascending: false }); if (data) S.reports = data; }
+        else if (S.proses === 'papel') { const { data } = await db.from('papel_ekleme_reports').select('*').order('created_at', { ascending: false }); if (data) S.papelReports = data; }
+        else if (S.proses === 'agac') { const { data } = await db.from('agac_kabul_reports').select('*').order('created_at', { ascending: false }); if (data) S.agacReports = data; }
         showSync();
     } catch (e) { console.error(e); }
     S.loading = false; render();
 }
 
-// RENDER FUNCTIONS
-function render() {
-    const app = document.getElementById('app');
-    if (!app) return;
-    updateOnline();
-    updatePendingBadge();
-    
-    if (!S.logged) { renderLogin(); return; }
-    if (!S.proses) { renderProses(); return; }
-    if (S.proses === 'kurutma') renderKurutma();
-    else if (S.proses === 'papel') renderPapel();
+function parseExcelFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const results = [];
+                workbook.SheetNames.forEach(sheetName => {
+                    const sheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    if (json.length < 10) return;
+                    const tedarikci = json[1]?.[0] || json[1]?.[7] || '';
+                    if (!tedarikci || tedarikci === 'NaN') return;
+                    let tarih = json[3]?.[2];
+                    if (tarih) { if (typeof tarih === 'number') { const d = new Date((tarih - 25569) * 86400 * 1000); tarih = d.toISOString().split('T')[0]; } else if (tarih instanceof Date) tarih = tarih.toISOString().split('T')[0]; } else tarih = new Date().toISOString().split('T')[0];
+                    const plaka = json[4]?.[2]?.toString() || '';
+                    const urunTipi = json[2]?.[2] || 'Березовый кругляк';
+                    const tomruklar = [];
+                    let toplamAdet = 0, toplamHacim = 0;
+                    const boy1 = json[9]?.[2];
+                    if (boy1 && !isNaN(boy1)) {
+                        const caplar = [];
+                        for (let i = 9; i < Math.min(50, json.length); i++) { const cap = json[i]?.[1], adet = json[i]?.[3], hacim = json[i]?.[5]; if (cap && adet && adet > 0) { caplar.push({ cap: parseInt(cap), adet: parseInt(adet), hacim_birim: parseFloat(json[i]?.[4]) || 0, hacim_toplam: parseFloat(hacim) || 0 }); toplamAdet += parseInt(adet); toplamHacim += parseFloat(hacim) || 0; } }
+                        if (caplar.length > 0) tomruklar.push({ boy: parseInt(boy1), caplar, boy_toplam_adet: caplar.reduce((s, c) => s + c.adet, 0), boy_toplam_hacim: parseFloat(caplar.reduce((s, c) => s + c.hacim_toplam, 0).toFixed(3)) });
+                    }
+                    if (json[9]?.length > 9) {
+                        const boy2 = json[9]?.[9];
+                        if (boy2 && !isNaN(boy2)) {
+                            const caplar = [];
+                            for (let i = 9; i < Math.min(50, json.length); i++) { const cap = json[i]?.[8], adet = json[i]?.[10], hacim = json[i]?.[12]; if (cap && adet && adet > 0) { caplar.push({ cap: parseInt(cap), adet: parseInt(adet), hacim_birim: parseFloat(json[i]?.[11]) || 0, hacim_toplam: parseFloat(hacim) || 0 }); toplamAdet += parseInt(adet); toplamHacim += parseFloat(hacim) || 0; } }
+                            if (caplar.length > 0) tomruklar.push({ boy: parseInt(boy2), caplar, boy_toplam_adet: caplar.reduce((s, c) => s + c.adet, 0), boy_toplam_hacim: parseFloat(caplar.reduce((s, c) => s + c.hacim_toplam, 0).toFixed(3)) });
+                        }
+                    }
+                    if (tomruklar.length > 0) results.push({ tedarikci: tedarikci.toString().trim(), date: tarih, plaka: plaka.toString().trim(), urun_tipi: urunTipi, tomruklar, toplam_adet: toplamAdet, toplam_hacim: parseFloat(toplamHacim.toFixed(3)), sheet_name: sheetName });
+                });
+                resolve(results);
+            } catch (err) { reject(err); }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+    });
 }
 
+function filterAgacReports() {
+    let list = [...S.agacReports];
+    if (S.fStart) list = list.filter(r => r.date >= S.fStart);
+    if (S.fEnd) list = list.filter(r => r.date <= S.fEnd);
+    if (S.agacFilters.tedarikci) list = list.filter(r => r.tedarikci === S.agacFilters.tedarikci);
+    if (S.agacFilters.boy) { const b = parseInt(S.agacFilters.boy); list = list.filter(r => r.tomruklar?.some(t => t.boy === b)); }
+    if (S.agacFilters.cap) { const c = parseInt(S.agacFilters.cap); list = list.filter(r => r.tomruklar?.some(t => t.caplar?.some(x => x.cap === c))); }
+    return list;
+}
+function getUniqueTedarikci() { return [...new Set(S.agacReports.map(r => r.tedarikci).filter(Boolean))].sort(); }
+function getUniqueBoylar() { const s = new Set(); S.agacReports.forEach(r => r.tomruklar?.forEach(t => s.add(t.boy))); return [...s].sort((a,b) => a-b); }
+function getUniqueCaplar() { const s = new Set(); S.agacReports.forEach(r => r.tomruklar?.forEach(t => t.caplar?.forEach(c => s.add(c.cap)))); return [...s].sort((a,b) => a-b); }
+
+function render() { const app = document.getElementById('app'); if (!app) return; updateOnline(); updatePendingBadge(); if (!S.logged) { renderLogin(); return; } if (!S.proses) { renderProses(); return; } if (S.proses === 'agac') renderAgac(); else if (S.proses === 'kurutma') renderKurutma(); else if (S.proses === 'papel') renderPapel(); }
+
 function renderLogin() {
-    document.getElementById('app').innerHTML = `
-    <div class="login-page">
-        <div class="bg-glow bg-glow-1"></div>
-        <div class="bg-glow bg-glow-2"></div>
-        <div class="login-card">
-            <div class="logo-box">NP</div>
-            <div class="brand">Nord<span>Panels</span>™</div>
-            <div class="tagline">SMART FACTORY SYSTEM</div>
-            <div style="display:flex;justify-content:center;gap:8px;margin:20px 0">
-                <span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">☁️ Cloud</span>
-                <span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">🤖 AI</span>
-                <span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">📱 PWA</span>
-            </div>
-            <div id="loginError" class="login-error"></div>
-            <input id="username" class="login-input" placeholder="Пользователь" type="text">
-            <input id="password" class="login-input" placeholder="Пароль" type="password">
-            <button class="login-btn" onclick="doLogin()">🚀 ВОЙТИ</button>
-            <div class="demo-box">
-                <div style="font-weight:600;margin-bottom:6px">📋 Демо:</div>
-                <div class="demo-item">admin / admin123</div>
-                <div class="demo-item">mehmet / mehmet123</div>
-            </div>
-        </div>
-    </div>`;
+    document.getElementById('app').innerHTML = `<div class="login-page"><div class="bg-glow bg-glow-1"></div><div class="bg-glow bg-glow-2"></div><div class="login-card"><div class="logo-box">NP</div><div class="brand">Nord<span>Panels</span>™</div><div class="tagline">SMART FACTORY SYSTEM</div><div style="display:flex;justify-content:center;gap:8px;margin:20px 0"><span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">☁️ Cloud</span><span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">🤖 AI</span><span style="background:#f0f0f0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600">📱 PWA</span></div><div id="loginError" class="login-error"></div><input id="username" class="login-input" placeholder="Пользователь" type="text"><input id="password" class="login-input" placeholder="Пароль" type="password"><label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:14px;color:#666"><input type="checkbox" id="rememberMe" style="width:18px;height:18px;cursor:pointer"> Запомнить меня</label><button class="login-btn" onclick="doLogin()">🚀 ВОЙТИ</button><div class="demo-box"><div style="font-weight:600;margin-bottom:6px">📋 Демо:</div><div class="demo-item">👑 admin / admin123</div><div class="demo-item">🌳 mehmet / mehmet123</div><div class="demo-item">🔥 ali / ali123</div><div class="demo-item">➕ ayse / ayse123</div></div></div></div>`;
 }
 
 function renderProses() {
-    document.getElementById('app').innerHTML = `
-    <div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100">
-        <div class="bg-white shadow-lg">
-            <div class="max-w-lg mx-auto p-4 flex justify-between items-center">
-                <div>
-                    <h1 class="text-xl font-bold text-gray-800">🏭 Система Отчётов</h1>
-                    <p class="text-sm text-gray-500">${S.user.name}</p>
-                </div>
-                <button onclick="doLogout()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm">Выход</button>
-            </div>
+    document.getElementById('app').innerHTML = `<div class="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100"><div class="bg-white shadow-lg"><div class="max-w-lg mx-auto p-4 flex justify-between items-center"><div><h1 class="text-xl font-bold text-gray-800">🏭 Система Отчётов</h1><p class="text-sm text-gray-500">${S.user.name}</p></div><button onclick="doLogout()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm">Выход</button></div></div><div class="max-w-lg mx-auto p-4 grid grid-cols-2 gap-3">${PROSES.map(p => { const has = S.user.perms.includes(p.id); return `<div onclick="${has && p.active ? `selectProses('${p.id}')` : ''}" class="bg-white rounded-2xl shadow p-5 text-center ${has && p.active ? 'cursor-pointer hover:shadow-lg active:scale-95' : 'opacity-50'} transition-all"><div class="${p.color} w-14 h-14 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">${p.icon}</div><div class="font-semibold text-gray-800">${p.name}</div>${!p.active ? '<div class="text-xs text-amber-500 mt-1">⏳ Скоро</div>' : ''}${!has && p.active ? '<div class="text-xs text-red-500 mt-1">🔒</div>' : ''}</div>`; }).join('')}</div></div>`;
+}
+
+function renderAgac() {
+    document.getElementById('app').innerHTML = `<div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 pb-20"><div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"><div class="max-w-lg mx-auto p-4 flex justify-between items-center"><div class="flex items-center gap-3"><button onclick="goBack()" class="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center">←</button><div><h1 class="font-bold">🌳 Приём леса</h1><p class="text-xs text-green-100">${S.user.name}</p></div></div><button onclick="doLogout()" class="bg-red-500 px-3 py-2 rounded-xl text-sm">Выход</button></div></div><div class="max-w-lg mx-auto p-4"><div class="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow"><button onclick="setTab('entry')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'entry' ? 'bg-green-500 text-white' : 'text-gray-500'}">📤 Загрузка</button><button onclick="setTab('reports')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'reports' ? 'bg-green-500 text-white' : 'text-gray-500'}">📋 Архив</button></div>${S.tab === 'entry' ? renderAgacEntry() : renderAgacReports()}</div></div>${S.agacDetail ? renderAgacDetailModal() : ''}<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50">✅</div>`;
+}
+
+function renderAgacEntry() {
+    return `<div class="upload-zone" onclick="document.getElementById('excelInput').click()"><input type="file" id="excelInput" accept=".xlsx,.xls" onchange="handleExcelUpload(this)" class="hidden"><div class="text-5xl mb-3">📊</div><div class="text-lg font-bold text-green-700 mb-1">Загрузить Excel</div><div class="text-sm text-green-600">калькулятор_кругляк.xlsx</div></div>${S.parsedExcel ? `<div class="mt-4"><div class="bg-green-100 text-green-800 p-3 rounded-xl mb-3 text-center font-semibold">✅ Найдено ${S.parsedExcel.length} записей</div>${S.parsedExcel.map(item => `<div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-green-500"><div class="font-bold text-gray-800">${item.tedarikci}</div><div class="text-sm text-gray-500 mb-2">📅 ${item.date} • 🚛 ${item.plaka || '-'}</div><div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-3 text-white text-center"><span class="font-bold">${item.toplam_adet} шт</span> • <span class="font-bold">${item.toplam_hacim} m³</span></div></div>`).join('')}<div class="flex gap-2"><button onclick="cancelParsed()" class="flex-1 bg-gray-400 text-white py-3 rounded-xl font-bold">❌ Отмена</button><button onclick="saveAgacReports()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold">${S.saving ? '<span class="spinner"></span>' : '💾 Сохранить'}</button></div></div>` : ''}`;
+}
+
+function renderAgacReports() {
+    const filtered = filterAgacReports();
+    const totals = filtered.reduce((a, r) => ({ adet: a.adet + (r.toplam_adet||0), hacim: a.hacim + (r.toplam_hacim||0) }), { adet: 0, hacim: 0 });
+    return `
+    <div class="bg-white rounded-2xl shadow p-3 mb-3">
+        <div class="grid grid-cols-3 gap-2 mb-2">
+            <input type="date" value="${S.fStart}" onchange="setDateFilter('fStart', this.value)" class="p-2 border rounded-lg text-xs">
+            <input type="date" value="${S.fEnd}" onchange="setDateFilter('fEnd', this.value)" class="p-2 border rounded-lg text-xs">
+            <button onclick="clearAgacFilters()" class="bg-gray-400 text-white rounded-lg text-xs">Сброс</button>
         </div>
-        <div class="max-w-lg mx-auto p-4 grid grid-cols-2 gap-3">
-            ${PROSES.map(p => {
-                const has = S.user.perms.includes(p.id);
-                return `<div onclick="${has && p.active ? `selectProses('${p.id}')` : ''}" 
-                    class="bg-white rounded-2xl shadow p-5 text-center ${has && p.active ? 'cursor-pointer hover:shadow-lg active:scale-95' : 'opacity-50'} transition-all">
-                    <div class="${p.color} w-14 h-14 rounded-xl flex items-center justify-center text-2xl mx-auto mb-2">${p.icon}</div>
-                    <div class="font-semibold text-gray-800">${p.name}</div>
-                    ${!p.active ? '<div class="text-xs text-amber-500 mt-1">⏳ Скоро</div>' : ''}
-                    ${!has && p.active ? '<div class="text-xs text-red-500 mt-1">🔒</div>' : ''}
-                </div>`;
-            }).join('')}
+    </div>
+    <div class="bg-white rounded-2xl shadow p-3 mb-3">
+        <div class="text-xs text-gray-500 mb-2 font-semibold">🏢 Поставщик</div>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+            <button onclick="setAgacFilter('tedarikci', '')" class="filter-chip ${!S.agacFilters.tedarikci ? 'active' : ''}">Все</button>
+            ${getUniqueTedarikci().map(t => `<button onclick="setAgacFilter('tedarikci', '${t}')" class="filter-chip ${S.agacFilters.tedarikci === t ? 'active' : ''}">${t}</button>`).join('')}
         </div>
-    </div>`;
+    </div>
+    <div class="bg-white rounded-2xl shadow p-3 mb-3">
+        <div class="text-xs text-gray-500 mb-2 font-semibold">📏 Длина бревна</div>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+            <button onclick="setAgacFilter('boy', '')" class="filter-chip ${!S.agacFilters.boy ? 'active' : ''}">Все</button>
+            ${getUniqueBoylar().map(b => `<button onclick="setAgacFilter('boy', '${b}')" class="filter-chip ${S.agacFilters.boy == b ? 'active' : ''}">${(b/100).toFixed(2)}m</button>`).join('')}
+        </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-3 mb-3">
+        <div class="text-xs text-gray-500 mb-2 font-semibold">🔘 Диаметр (см)</div>
+        <div class="flex gap-2 overflow-x-auto pb-2">
+            <button onclick="setAgacFilter('cap', '')" class="filter-chip ${!S.agacFilters.cap ? 'active' : ''}">Все</button>
+            ${getUniqueCaplar().map(c => `<button onclick="setAgacFilter('cap', '${c}')" class="filter-chip ${S.agacFilters.cap == c ? 'active' : ''}">${c}</button>`).join('')}
+        </div>
+    </div>
+    ${filtered.length > 0 ? `<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 mb-3 text-white"><div class="text-center text-sm mb-2">📊 Итого (${filtered.length} записей)</div><div class="grid grid-cols-2 gap-3 text-center"><div class="bg-white/20 rounded-xl p-3"><div class="text-2xl font-bold">${totals.adet.toLocaleString()}</div><div class="text-xs">штук</div></div><div class="bg-white/20 rounded-xl p-3"><div class="text-2xl font-bold">${totals.hacim.toFixed(3)}</div><div class="text-xs">m³</div></div></div></div>` : ''}
+    <div class="flex gap-2 mb-3">
+        <button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-semibold">🔄 Обновить</button>
+        <button onclick="exportAgac()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm font-semibold">📊 Excel</button>
+    </div>
+    ${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#22C55E;width:32px;height:32px"></div></div>' : filtered.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет записей</div>' : filtered.map(r => `<div class="bg-white rounded-2xl shadow p-4 mb-3 cursor-pointer" onclick="showAgacDetail(${r.id})"><div class="flex justify-between items-start mb-2"><div><div class="font-bold text-gray-800">${r.tedarikci || '-'}</div><div class="text-sm text-gray-500">📅 ${r.date} • 🚛 ${r.plaka || '-'}</div></div>${S.user.isAdmin ? `<button onclick="event.stopPropagation(); deleteAgac(${r.id})" class="text-red-400 p-1">🗑️</button>` : ''}</div><div class="flex gap-2 mb-2">${(r.tomruklar || []).map(t => `<div class="bg-green-50 rounded-lg px-3 py-1 text-center flex-1"><div class="text-xs text-green-600">${(t.boy/100).toFixed(2)}m</div><div class="font-bold text-green-700 text-sm">${t.boy_toplam_adet} шт</div></div>`).join('')}</div><div class="flex justify-between items-center text-sm"><span class="text-gray-500">Итого: <b>${r.toplam_adet}</b> шт</span><span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">${r.toplam_hacim} m³</span></div></div>`).join('')}`;
+}
+
+function renderAgacDetailModal() {
+    const r = S.agacDetail; if (!r) return '';
+    return `<div class="detail-modal" onclick="closeAgacDetail()"><div class="detail-content" onclick="event.stopPropagation()"><div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-t-3xl"><div class="flex justify-between items-start"><div><h2 class="font-bold text-lg">${r.tedarikci}</h2><div class="text-sm text-green-100">📅 ${r.date} • 🚛 ${r.plaka || '-'}</div></div><button onclick="closeAgacDetail()" class="bg-white/20 w-8 h-8 rounded-full">✕</button></div></div><div class="p-4">${(r.tomruklar || []).map(t => `<div class="bg-gray-50 rounded-xl p-3 mb-3"><div class="flex justify-between items-center mb-2 pb-2 border-b"><span class="font-bold text-green-700">📏 ${(t.boy/100).toFixed(2)}m</span><span class="bg-green-500 text-white px-2 py-1 rounded-lg text-sm">${t.boy_toplam_hacim} m³</span></div><div class="tomruk-row font-semibold text-xs text-gray-500"><div>Диаметр</div><div class="text-center">Кол-во</div><div class="text-right">Объём</div></div>${(t.caplar || []).map(c => `<div class="tomruk-row"><div>${c.cap} см</div><div class="text-center">${c.adet} шт</div><div class="text-right text-green-600 font-semibold">${c.hacim_toplam.toFixed(3)} m³</div></div>`).join('')}</div>`).join('')}<div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white text-center"><div class="text-2xl font-bold">${r.toplam_adet} шт • ${r.toplam_hacim} m³</div></div></div></div></div>`;
 }
 
 function renderKurutma() {
     const filtered = S.filtering ? S.reports.filter(r => { const d = r.date?.split(' ')[0]; return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd); }) : S.reports;
-    
-    document.getElementById('app').innerHTML = `
-    <div class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 pb-20">
-        <div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg">
-            <div class="max-w-lg mx-auto p-4 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <button onclick="goBack()" class="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center">←</button>
-                    <div>
-                        <h1 class="font-bold">🔥 Сушка</h1>
-                        <p class="text-xs text-orange-100">${S.user.name}${S.user.isAdmin ? ' 👑' : ''}</p>
-                    </div>
-                </div>
-                <button onclick="doLogout()" class="bg-red-500 px-3 py-2 rounded-xl text-sm">Выход</button>
-            </div>
-        </div>
-        <div class="max-w-lg mx-auto p-4">
-            <div class="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow">
-                <button onclick="setTab('entry')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'entry' ? 'bg-orange-500 text-white' : 'text-gray-500'}">📝 Ввод</button>
-                <button onclick="setTab('reports')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'reports' ? 'bg-orange-500 text-white' : 'text-gray-500'}">📋 Отчёты</button>
-            </div>
-            ${S.tab === 'entry' ? renderKurutmaEntry() : renderKurutmaReports(filtered)}
-        </div>
-    </div>
-    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50">✅ Сохранено!</div>`;
+    document.getElementById('app').innerHTML = `<div class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 pb-20"><div class="bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg"><div class="max-w-lg mx-auto p-4 flex justify-between items-center"><div class="flex items-center gap-3"><button onclick="goBack()" class="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center">←</button><div><h1 class="font-bold">🔥 Сушка</h1><p class="text-xs text-orange-100">${S.user.name}</p></div></div><button onclick="doLogout()" class="bg-red-500 px-3 py-2 rounded-xl text-sm">Выход</button></div></div><div class="max-w-lg mx-auto p-4"><div class="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow"><button onclick="setTab('entry')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'entry' ? 'bg-orange-500 text-white' : 'text-gray-500'}">📝 Ввод</button><button onclick="setTab('reports')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'reports' ? 'bg-orange-500 text-white' : 'text-gray-500'}">📋 Отчёты</button></div>${S.tab === 'entry' ? renderKurutmaEntry() : renderKurutmaReports(filtered)}</div></div><div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50">✅</div>`;
 }
 
 function renderKurutmaEntry() {
-    return `
-    <div class="bg-white rounded-2xl shadow p-4 mb-3">
-        <div class="flex gap-3 mb-3">
-            <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'sabah' ? 'bg-amber-400 text-white' : 'bg-gray-100'}">🌅 Утро</button>
-            <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'aksam' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}">🌙 Вечер</button>
-        </div>
-        ${S.user.isAdmin ? `<input type="date" value="${S.date}" onchange="setDate(this.value)" class="w-full p-3 border-2 rounded-xl">` : ''}
-    </div>
-    ${S.kurutma.map(m => `
-    <div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-orange-400">
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-                <div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold">${m.id}</div>
-                <span class="font-semibold">Машина ${m.id}</span>
-            </div>
-            ${m.aiResult !== null ? `<span class="text-xs px-2 py-1 rounded-full bg-${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).color}-100 text-${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).color}-700">${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).icon} AI: ${m.aiResult}</span>` : ''}
-        </div>
-        <div class="flex gap-2 mb-3">
-            <label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}">📷</div><input type="file" accept="image/*" capture="environment" onchange="handleKPhoto(${m.id},this)" class="hidden"></label>
-            <label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}">🖼️</div><input type="file" accept="image/*" onchange="handleKPhoto(${m.id},this)" class="hidden"></label>
-        </div>
-        ${m.preview ? `<div class="mb-3 relative"><img src="${m.preview}" class="w-full h-28 object-cover rounded-xl"><button onclick="clearKPhoto(${m.id})" class="absolute top-1 right-1 bg-red-500 text-white w-7 h-7 rounded-full text-sm">✕</button></div>` : ''}
-        <div class="grid grid-cols-3 gap-2 mb-3">
-            <div><label class="text-xs text-gray-400">Ширина</label><input type="number" value="${m.en}" onchange="updateK(${m.id},'en',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div>
-            <div><label class="text-xs text-gray-400">Длина</label><input type="number" value="${m.boy}" onchange="updateK(${m.id},'boy',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div>
-            <div><label class="text-xs text-gray-400">Толщина</label><input type="number" value="${m.kalinlik}" onchange="updateK(${m.id},'kalinlik',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50" step="0.1"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-            <div class="bg-blue-50 p-3 rounded-xl">
-                <label class="text-xs text-blue-600 font-semibold">Поперечный</label>
-                <input type="number" value="${m.qp}" onchange="updateK(${m.id},'qp',this.value)" class="input-field w-full p-2 mt-1 border-2 border-blue-200 rounded-lg text-center font-bold text-blue-700" placeholder="0">
-            </div>
-            <div class="bg-green-50 p-3 rounded-xl">
-                <label class="text-xs text-green-600 font-semibold">Продольный</label>
-                <input type="number" value="${m.qd}" onchange="updateK(${m.id},'qd',this.value)" class="input-field w-full p-2 mt-1 border-2 border-green-200 rounded-lg text-center font-bold text-green-700" placeholder="0">
-            </div>
-        </div>
-    </div>`).join('')}
-    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white">
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="bg-white/20 rounded-xl p-3 text-center">
-                <div class="text-xs opacity-80">Поперечный</div>
-                <div class="text-xl font-bold">${totalQty('p')} шт</div>
-                <div class="text-sm">${totalVol('p')} m³</div>
-            </div>
-            <div class="bg-white/20 rounded-xl p-3 text-center">
-                <div class="text-xs opacity-80">Продольный</div>
-                <div class="text-xl font-bold">${totalQty('d')} шт</div>
-                <div class="text-sm">${totalVol('d')} m³</div>
-            </div>
-        </div>
-        <div class="bg-white/30 rounded-xl p-3 text-center mb-3">
-            <div class="text-sm">Общий Объём</div>
-            <div class="text-3xl font-bold">${grandTotal()} m³</div>
-        </div>
-        <button onclick="saveKurutma()" class="w-full bg-green-500 py-3 rounded-xl font-bold" ${S.saving ? 'disabled' : ''}>
-            ${S.saving ? '<span class="spinner"></span> AI анализ...' : '💾 Сохранить'}
-        </button>
-    </div>`;
+    return `<div class="bg-white rounded-2xl shadow p-4 mb-3"><div class="flex gap-3 mb-3"><button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'sabah' ? 'bg-amber-400 text-white' : 'bg-gray-100'}">🌅 Утро</button><button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'aksam' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}">🌙 Вечер</button></div>${S.user.isAdmin ? `<input type="date" value="${S.date}" onchange="setDate(this.value)" class="w-full p-3 border-2 rounded-xl">` : ''}</div>${S.kurutma.map(m => `<div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-orange-400"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-2"><div class="bg-orange-100 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold">${m.id}</div><span class="font-semibold">Машина ${m.id}</span></div>${m.aiResult !== null ? `<span class="text-xs px-2 py-1 rounded-full bg-${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).color}-100 text-${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).color}-700">${verify(parseInt(m.qp)||parseInt(m.qd)||0, m.aiResult).icon} AI: ${m.aiResult}</span>` : ''}</div><div class="flex gap-2 mb-3"><label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}">📷 Камера</div><input type="file" accept="image/*" capture="environment" onchange="handleKPhoto(${m.id},this)" class="hidden"></label><label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}">🖼️ Галерея</div><input type="file" accept="image/*" onchange="handleKPhoto(${m.id},this)" class="hidden"></label></div>${m.preview ? `<div class="mb-3 relative"><img src="${m.preview}" class="w-full h-32 object-cover rounded-xl"><button onclick="clearKPhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">✕</button></div>` : ''}<div class="grid grid-cols-3 gap-2 mb-3"><div><label class="text-xs text-gray-400">Ширина</label><input type="number" value="${m.en}" onchange="updateK(${m.id},'en',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div><div><label class="text-xs text-gray-400">Длина</label><input type="number" value="${m.boy}" onchange="updateK(${m.id},'boy',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div><div><label class="text-xs text-gray-400">Толщина</label><input type="number" value="${m.kalinlik}" onchange="updateK(${m.id},'kalinlik',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50" step="0.1"></div></div><div class="grid grid-cols-2 gap-3"><div class="bg-blue-50 p-3 rounded-xl"><label class="text-xs text-blue-600 font-semibold">Поперечный</label><input type="number" value="${m.qp}" onchange="updateK(${m.id},'qp',this.value)" class="input-field w-full p-2 mt-1 border-2 border-blue-200 rounded-lg text-center font-bold text-blue-700" placeholder="0"></div><div class="bg-green-50 p-3 rounded-xl"><label class="text-xs text-green-600 font-semibold">Продольный</label><input type="number" value="${m.qd}" onchange="updateK(${m.id},'qd',this.value)" class="input-field w-full p-2 mt-1 border-2 border-green-200 rounded-lg text-center font-bold text-green-700" placeholder="0"></div></div></div>`).join('')}<div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white"><div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-white/20 rounded-xl p-3 text-center"><div class="text-xs">Поперечный</div><div class="text-xl font-bold">${totalQty('p')} шт</div><div class="text-sm">${totalVol('p')} m³</div></div><div class="bg-white/20 rounded-xl p-3 text-center"><div class="text-xs">Продольный</div><div class="text-xl font-bold">${totalQty('d')} шт</div><div class="text-sm">${totalVol('d')} m³</div></div></div><div class="bg-white/30 rounded-xl p-3 text-center mb-3"><div class="text-3xl font-bold">${grandTotal()} m³</div></div><button onclick="saveKurutma()" class="w-full bg-green-500 py-3 rounded-xl font-bold">${S.saving ? '<span class="spinner"></span> AI анализ...' : '💾 Сохранить'}</button></div>`;
 }
 
 function renderKurutmaReports(list) {
-    return `
-    <div class="bg-white rounded-2xl shadow p-3 mb-3">
-        <div class="grid grid-cols-3 gap-2 mb-2">
-            <input type="date" value="${S.fStart}" onchange="S.fStart=this.value" class="p-2 border rounded-lg text-xs">
-            <input type="date" value="${S.fEnd}" onchange="S.fEnd=this.value" class="p-2 border rounded-lg text-xs">
-            <button onclick="applyFilter()" class="bg-indigo-500 text-white rounded-lg text-xs">Фильтр</button>
-        </div>
-        <div class="flex gap-2">
-            ${S.filtering ? '<button onclick="clearFilter()" class="flex-1 bg-gray-400 text-white py-2 rounded-lg text-xs">Все</button>' : ''}
-            <button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs">🔄</button>
-            <button onclick="exportK()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊</button>
-        </div>
-    </div>
-    ${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#F97316;width:32px;height:32px"></div></div>' :
-    list.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет отчётов</div>' :
-    list.map(r => `
-    <div class="bg-white rounded-2xl shadow p-3 mb-2 border-l-4 border-${r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray'}-400">
-        <div class="flex justify-between items-start mb-2">
-            <div>
-                <div class="font-semibold">${r.date}</div>
-                <div class="text-xs text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user_name}</div>
-            </div>
-            ${S.user.isAdmin ? `<button onclick="deleteK(${r.id})" class="text-red-500 text-xs">🗑️</button>` : ''}
-        </div>
-        <div class="flex gap-2 text-center text-sm">
-            <div class="flex-1 bg-blue-50 rounded-lg p-2"><div class="text-xs text-blue-600">Поп.</div><div class="font-bold text-blue-700">${r.tqp}</div></div>
-            <div class="flex-1 bg-green-50 rounded-lg p-2"><div class="text-xs text-green-600">Прод.</div><div class="font-bold text-green-700">${r.tqd}</div></div>
-            <div class="flex-1 bg-indigo-50 rounded-lg p-2"><div class="text-xs text-indigo-600">Объём</div><div class="font-bold text-indigo-700">${r.gt} m³</div></div>
-        </div>
-    </div>`).join('')}`;
+    return `<div class="bg-white rounded-2xl shadow p-3 mb-3"><div class="flex gap-2"><button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs">🔄</button><button onclick="exportK()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊</button></div></div>${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#F97316;width:32px;height:32px"></div></div>' : list.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет отчётов</div>' : list.map(r => `<div class="bg-white rounded-2xl shadow p-3 mb-2 border-l-4 border-${r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray'}-400"><div class="flex justify-between items-start mb-2"><div><div class="font-semibold">${r.date}</div><div class="text-xs text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user_name}</div></div><div class="flex items-center gap-2">${r.verification_status === 'verified' ? '<span class="text-green-500">✅</span>' : r.verification_status === 'mismatch' ? '<span class="text-red-500">❌</span>' : ''}${S.user.isAdmin ? `<button onclick="deleteK(${r.id})" class="text-red-500 text-xs">🗑️</button>` : ''}</div></div><div class="flex gap-2 text-center text-sm"><div class="flex-1 bg-blue-50 rounded-lg p-2"><div class="text-xs text-blue-600">Поп.</div><div class="font-bold text-blue-700">${r.tqp}</div></div><div class="flex-1 bg-green-50 rounded-lg p-2"><div class="text-xs text-green-600">Прод.</div><div class="font-bold text-green-700">${r.tqd}</div></div><div class="flex-1 bg-indigo-50 rounded-lg p-2"><div class="text-xs text-indigo-600">m³</div><div class="font-bold text-indigo-700">${r.gt}</div></div></div></div>`).join('')}`;
 }
 
 function renderPapel() {
     const filtered = S.filtering ? S.papelReports.filter(r => { const d = r.date?.split(' ')[0]; return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd); }) : S.papelReports;
-    
-    document.getElementById('app').innerHTML = `
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 pb-20">
-        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg">
-            <div class="max-w-lg mx-auto p-4 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <button onclick="goBack()" class="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center">←</button>
-                    <div>
-                        <h1 class="font-bold">➕ Ребросклейка</h1>
-                        <p class="text-xs text-blue-100">${S.user.name}${S.user.isAdmin ? ' 👑' : ''}</p>
-                    </div>
-                </div>
-                <button onclick="doLogout()" class="bg-red-500 px-3 py-2 rounded-xl text-sm">Выход</button>
-            </div>
-        </div>
-        <div class="max-w-lg mx-auto p-4">
-            <div class="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow">
-                <button onclick="setTab('entry')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'entry' ? 'bg-blue-500 text-white' : 'text-gray-500'}">📝 Ввод</button>
-                <button onclick="setTab('reports')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'reports' ? 'bg-blue-500 text-white' : 'text-gray-500'}">📋 Отчёты</button>
-            </div>
-            ${S.tab === 'entry' ? renderPapelEntry() : renderPapelReports(filtered)}
-        </div>
-    </div>
-    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50">✅ Сохранено!</div>`;
+    document.getElementById('app').innerHTML = `<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 pb-20"><div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"><div class="max-w-lg mx-auto p-4 flex justify-between items-center"><div class="flex items-center gap-3"><button onclick="goBack()" class="bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center">←</button><div><h1 class="font-bold">➕ Ребросклейка</h1><p class="text-xs text-blue-100">${S.user.name}</p></div></div><button onclick="doLogout()" class="bg-red-500 px-3 py-2 rounded-xl text-sm">Выход</button></div></div><div class="max-w-lg mx-auto p-4"><div class="flex gap-2 mb-4 bg-white rounded-2xl p-1.5 shadow"><button onclick="setTab('entry')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'entry' ? 'bg-blue-500 text-white' : 'text-gray-500'}">📝 Ввод</button><button onclick="setTab('reports')" class="flex-1 py-2.5 rounded-xl font-semibold text-sm ${S.tab === 'reports' ? 'bg-blue-500 text-white' : 'text-gray-500'}">📋 Отчёты</button></div>${S.tab === 'entry' ? renderPapelEntry() : renderPapelReports(filtered)}</div></div><div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden z-50">✅</div>`;
 }
 
 function renderPapelEntry() {
-    return `
-    <div class="bg-white rounded-2xl shadow p-4 mb-3">
-        <div class="flex gap-3 mb-3">
-            <button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'sabah' ? 'bg-amber-400 text-white' : 'bg-gray-100'}">🌅 Утро</button>
-            <button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'aksam' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}">🌙 Вечер</button>
-        </div>
-        ${S.user.isAdmin ? `<input type="date" value="${S.date}" onchange="setDate(this.value)" class="w-full p-3 border-2 rounded-xl">` : ''}
-    </div>
-    ${S.papel.map(m => `
-    <div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-${m.color}-500">
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-3">
-                <div class="bg-${m.color}-100 text-${m.color}-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl">${m.icon}</div>
-                <div>
-                    <div class="font-bold">Машина ${m.name}</div>
-                    <div class="text-xs text-${m.color}-500">${m.type === 'poperechny' ? 'Sokrasına' : 'Suyuna'}</div>
-                </div>
-            </div>
-            ${m.aiResult !== null ? `<span class="text-xs px-2 py-1 rounded-full bg-${verify(parseInt(m.shpon)||0, m.aiResult).color}-100 text-${verify(parseInt(m.shpon)||0, m.aiResult).color}-700">${verify(parseInt(m.shpon)||0, m.aiResult).icon} AI: ${m.aiResult}</span>` : ''}
-        </div>
-        <div class="flex gap-2 mb-3">
-            <label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}">📷 Камера</div><input type="file" accept="image/*" capture="environment" onchange="handlePPhoto(${m.id},this)" class="hidden"></label>
-            <label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}">🖼️ Галерея</div><input type="file" accept="image/*" onchange="handlePPhoto(${m.id},this)" class="hidden"></label>
-        </div>
-        ${m.preview ? `<div class="mb-3 relative"><img src="${m.preview}" class="w-full h-32 object-cover rounded-xl border-2 border-${m.color}-200"><button onclick="clearPPhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">✕</button></div>` : ''}
-        <div class="grid grid-cols-3 gap-2 mb-3">
-            <div><label class="text-xs text-gray-400">Ширина</label><input type="number" value="${m.en}" onchange="updateP(${m.id},'en',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div>
-            <div><label class="text-xs text-gray-400">Длина</label><input type="number" value="${m.boy}" onchange="updateP(${m.id},'boy',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div>
-            <div><label class="text-xs text-gray-400">Толщина</label><input type="number" value="${m.kalinlik}" onchange="updateP(${m.id},'kalinlik',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50" step="0.1"></div>
-        </div>
-        <div class="bg-${m.color}-50 p-4 rounded-xl border-2 border-${m.color}-200">
-            <label class="text-sm text-${m.color}-700 font-bold block mb-2">📄 Шпон (шт)</label>
-            <input type="number" value="${m.shpon}" onchange="updateP(${m.id},'shpon',this.value)" class="input-field w-full p-4 border-2 border-${m.color}-300 rounded-xl text-center font-bold text-${m.color}-700 text-2xl" placeholder="0" inputmode="numeric">
-        </div>
-        <div class="mt-3 text-right">
-            <span class="bg-${m.color}-100 text-${m.color}-700 px-3 py-1 rounded-lg text-sm font-semibold">${calcPapelVol(m)} m³</span>
-        </div>
-    </div>`).join('')}
-    
-    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white">
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="bg-white/20 rounded-xl p-3 text-center">
-                <div class="text-xs opacity-80">↔️ Поперечный</div>
-                <div class="text-xl font-bold">${parseInt(S.papel[0].shpon)||0} шт</div>
-                <div class="text-sm">${calcPapelVol(S.papel[0])} m³</div>
-            </div>
-            <div class="bg-white/20 rounded-xl p-3 text-center">
-                <div class="text-xs opacity-80">↕️ Продольный</div>
-                <div class="text-xl font-bold">${parseInt(S.papel[1].shpon)||0} шт</div>
-                <div class="text-sm">${calcPapelVol(S.papel[1])} m³</div>
-            </div>
-        </div>
-        <div class="bg-white/30 rounded-xl p-3 text-center mb-3">
-            <div class="text-sm">📄 Всего Шпон</div>
-            <div class="text-2xl font-bold">${totalShpon()} шт</div>
-        </div>
-        <div class="bg-white/30 rounded-xl p-3 text-center mb-3">
-            <div class="text-sm">Общий Объём</div>
-            <div class="text-3xl font-bold">${grandPapelTotal()} m³</div>
-        </div>
-        <button onclick="savePapel()" class="w-full bg-green-500 py-3 rounded-xl font-bold" ${S.saving ? 'disabled' : ''}>
-            ${S.saving ? '<span class="spinner"></span> AI анализ...' : '💾 Сохранить'}
-        </button>
-    </div>`;
+    return `<div class="bg-white rounded-2xl shadow p-4 mb-3"><div class="flex gap-3 mb-3"><button onclick="setShift('sabah')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'sabah' ? 'bg-amber-400 text-white' : 'bg-gray-100'}">🌅 Утро</button><button onclick="setShift('aksam')" class="flex-1 py-3 rounded-xl font-semibold ${S.shift === 'aksam' ? 'bg-indigo-500 text-white' : 'bg-gray-100'}">🌙 Вечер</button></div>${S.user.isAdmin ? `<input type="date" value="${S.date}" onchange="setDate(this.value)" class="w-full p-3 border-2 rounded-xl">` : ''}</div>${S.papel.map(m => `<div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-${m.color}-500"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-3"><div class="bg-${m.color}-100 text-${m.color}-600 w-12 h-12 rounded-xl flex items-center justify-center text-2xl">${m.icon}</div><div class="font-bold">${m.name}</div></div>${m.aiResult !== null ? `<span class="text-xs px-2 py-1 rounded-full bg-${verify(parseInt(m.shpon)||0, m.aiResult).color}-100 text-${verify(parseInt(m.shpon)||0, m.aiResult).color}-700">${verify(parseInt(m.shpon)||0, m.aiResult).icon} AI: ${m.aiResult}</span>` : ''}</div><div class="flex gap-2 mb-3"><label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}">📷 Камера</div><input type="file" accept="image/*" capture="environment" onchange="handlePPhoto(${m.id},this)" class="hidden"></label><label class="flex-1 cursor-pointer"><div class="py-2.5 rounded-xl text-center text-sm font-semibold ${m.preview ? 'bg-green-500 text-white' : 'bg-purple-500 text-white'}">🖼️ Галерея</div><input type="file" accept="image/*" onchange="handlePPhoto(${m.id},this)" class="hidden"></label></div>${m.preview ? `<div class="mb-3 relative"><img src="${m.preview}" class="w-full h-32 object-cover rounded-xl border-2 border-${m.color}-200"><button onclick="clearPPhoto(${m.id})" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full">✕</button></div>` : ''}<div class="grid grid-cols-3 gap-2 mb-3"><div><label class="text-xs text-gray-400">Ширина</label><input type="number" value="${m.en}" onchange="updateP(${m.id},'en',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div><div><label class="text-xs text-gray-400">Длина</label><input type="number" value="${m.boy}" onchange="updateP(${m.id},'boy',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50"></div><div><label class="text-xs text-gray-400">Толщина</label><input type="number" value="${m.kalinlik}" onchange="updateP(${m.id},'kalinlik',this.value)" class="input-field w-full p-2 border rounded-lg text-center text-sm bg-gray-50" step="0.1"></div></div><div class="bg-${m.color}-50 p-4 rounded-xl"><label class="text-sm text-${m.color}-700 font-bold block mb-2">📄 Шпон (шт)</label><input type="number" value="${m.shpon}" onchange="updateP(${m.id},'shpon',this.value)" class="input-field w-full p-4 border-2 border-${m.color}-300 rounded-xl text-center font-bold text-${m.color}-700 text-2xl" placeholder="0"></div><div class="mt-3 text-right"><span class="bg-${m.color}-100 text-${m.color}-700 px-3 py-1 rounded-lg text-sm font-semibold">${calcPapelVol(m)} m³</span></div></div>`).join('')}<div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white"><div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-white/20 rounded-xl p-3 text-center"><div class="text-xs">↔️ Поперечный</div><div class="text-xl font-bold">${parseInt(S.papel[0].shpon)||0} шт</div><div class="text-sm">${calcPapelVol(S.papel[0])} m³</div></div><div class="bg-white/20 rounded-xl p-3 text-center"><div class="text-xs">↕️ Продольный</div><div class="text-xl font-bold">${parseInt(S.papel[1].shpon)||0} шт</div><div class="text-sm">${calcPapelVol(S.papel[1])} m³</div></div></div><div class="bg-white/30 rounded-xl p-3 text-center mb-3"><div class="text-sm">📄 Всего</div><div class="text-2xl font-bold">${totalShpon()} шт • ${grandPapelTotal()} m³</div></div><button onclick="savePapel()" class="w-full bg-green-500 py-3 rounded-xl font-bold">${S.saving ? '<span class="spinner"></span> AI анализ...' : '💾 Сохранить'}</button></div>`;
 }
 
 function renderPapelReports(list) {
-    // Calculate totals for period
-    const totals = list.reduce((acc, r) => ({
-        pop: acc.pop + (r.sokrasina_shpon || 0),
-        prod: acc.prod + (r.suyuna_shpon || 0),
-        shpon: acc.shpon + (r.total_shpon || 0),
-        vol: acc.vol + parseFloat(r.gt || 0)
-    }), { pop: 0, prod: 0, shpon: 0, vol: 0 });
-
-    return `
-    <div class="bg-white rounded-2xl shadow p-3 mb-3">
-        <div class="grid grid-cols-3 gap-2 mb-2">
-            <input type="date" value="${S.fStart}" onchange="S.fStart=this.value" class="p-2 border rounded-lg text-xs">
-            <input type="date" value="${S.fEnd}" onchange="S.fEnd=this.value" class="p-2 border rounded-lg text-xs">
-            <button onclick="applyFilter()" class="bg-indigo-500 text-white rounded-lg text-xs">Фильтр</button>
-        </div>
-        <div class="flex gap-2">
-            ${S.filtering ? '<button onclick="clearFilter()" class="flex-1 bg-gray-400 text-white py-2 rounded-lg text-xs">Все</button>' : ''}
-            <button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs">🔄</button>
-            <button onclick="exportP()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊 Excel</button>
-        </div>
-    </div>
-    
-    ${list.length > 0 ? `
-    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 mb-3 text-white">
-        <div class="text-center text-sm mb-2 opacity-80">📊 Итого за период (${list.length} отчётов)</div>
-        <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="bg-white/20 rounded-xl p-2">
-                <div class="text-xs opacity-80">↔️ Поп.</div>
-                <div class="text-lg font-bold">${totals.pop}</div>
-            </div>
-            <div class="bg-white/20 rounded-xl p-2">
-                <div class="text-xs opacity-80">↕️ Прод.</div>
-                <div class="text-lg font-bold">${totals.prod}</div>
-            </div>
-            <div class="bg-white/20 rounded-xl p-2">
-                <div class="text-xs opacity-80">Объём</div>
-                <div class="text-lg font-bold">${totals.vol.toFixed(3)} m³</div>
-            </div>
-        </div>
-        <div class="bg-white/30 rounded-xl p-2 mt-2 text-center">
-            <span class="text-sm">📄 Всего Шпон: </span>
-            <span class="text-xl font-bold">${totals.shpon} шт</span>
-        </div>
-    </div>` : ''}
-    
-    ${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#3B82F6;width:32px;height:32px"></div></div>' :
-    list.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет отчётов</div>' :
-    list.map(r => {
-        const v = r.verifications || [];
-        const hasAI = v.length > 0;
-        const statusColor = r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray';
-        const statusIcon = r.verification_status === 'verified' ? '✅' : r.verification_status === 'mismatch' ? '❌' : '⚪';
-        
-        return `
-    <div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-${statusColor}-400">
-        <div class="flex justify-between items-start mb-3">
-            <div>
-                <div class="font-bold text-gray-800">${r.date}</div>
-                <div class="text-sm text-gray-500">${r.shift === 'sabah' ? '🌅 Утро' : '🌙 Вечер'} • ${r.user_name}</div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="text-lg">${statusIcon}</span>
-                ${S.user.isAdmin ? `<button onclick="deleteP(${r.id})" class="text-red-400 hover:text-red-600 p-1">🗑️</button>` : ''}
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-3 gap-2 mb-3">
-            <div class="bg-blue-50 rounded-xl p-3 text-center">
-                <div class="text-xs text-blue-600 mb-1">↔️ Поперечный</div>
-                <div class="text-xl font-bold text-blue-700">${r.sokrasina_shpon || 0}</div>
-            </div>
-            <div class="bg-green-50 rounded-xl p-3 text-center">
-                <div class="text-xs text-green-600 mb-1">↕️ Продольный</div>
-                <div class="text-xl font-bold text-green-700">${r.suyuna_shpon || 0}</div>
-            </div>
-            <div class="bg-indigo-50 rounded-xl p-3 text-center">
-                <div class="text-xs text-indigo-600 mb-1">Объём</div>
-                <div class="text-xl font-bold text-indigo-700">${r.gt} m³</div>
-            </div>
-        </div>
-        
-        <div class="bg-gray-50 rounded-xl p-2 text-center mb-2">
-            <span class="text-sm text-gray-600">📄 Всего: </span>
-            <span class="font-bold text-gray-800">${r.total_shpon || 0} шт</span>
-        </div>
-        
-        ${hasAI ? `
-        <div class="border-t pt-3 mt-2">
-            <div class="text-xs text-gray-500 mb-2">🤖 AI Проверка:</div>
-            ${v.map(item => {
-                const machName = item.type === 'poperechny' ? '↔️ Поп.' : '↕️ Прод.';
-                const diff = item.diff !== null && item.diff !== undefined ? item.diff : '-';
-                const itemColor = item.status === 'verified' ? 'green' : item.status === 'mismatch' ? 'red' : 'gray';
-                const aiVal = item.aiRead !== null && item.aiRead !== undefined ? item.aiRead : '-';
-                const entVal = item.entered !== null && item.entered !== undefined ? item.entered : '-';
-                return `
-                <div class="flex justify-between items-center text-sm bg-${itemColor}-50 rounded-lg p-2 mb-1">
-                    <span class="text-gray-600">${machName}</span>
-                    <span>Ввод: <b>${entVal}</b></span>
-                    <span>AI: <b>${aiVal}</b></span>
-                    <span class="text-${itemColor}-600 font-semibold">Δ${diff}</span>
-                </div>`;
-            }).join('')}
-        </div>` : ''}
-    </div>`;
-    }).join('')}`;
+    const totals = list.reduce((a, r) => ({ pop: a.pop + (r.sokrasina_shpon||0), prod: a.prod + (r.suyuna_shpon||0), shpon: a.shpon + (r.total_shpon||0), vol: a.vol + parseFloat(r.gt||0) }), { pop:0, prod:0, shpon:0, vol:0 });
+    return `<div class="bg-white rounded-2xl shadow p-3 mb-3"><div class="flex gap-2"><button onclick="loadReports()" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-xs">🔄</button><button onclick="exportP()" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-xs">📊</button></div></div>${list.length > 0 ? `<div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 mb-3 text-white"><div class="text-center text-sm mb-2">📊 Итого (${list.length})</div><div class="grid grid-cols-3 gap-2 text-center"><div class="bg-white/20 rounded-xl p-2"><div class="text-xs">↔️</div><div class="font-bold">${totals.pop}</div></div><div class="bg-white/20 rounded-xl p-2"><div class="text-xs">↕️</div><div class="font-bold">${totals.prod}</div></div><div class="bg-white/20 rounded-xl p-2"><div class="text-xs">m³</div><div class="font-bold">${totals.vol.toFixed(3)}</div></div></div></div>` : ''}${S.loading ? '<div class="text-center py-8"><div class="spinner" style="border-top-color:#3B82F6;width:32px;height:32px"></div></div>' : list.length === 0 ? '<div class="bg-white rounded-2xl p-6 text-center text-gray-400">📋 Нет отчётов</div>' : list.map(r => `<div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-${r.verification_status === 'verified' ? 'green' : r.verification_status === 'mismatch' ? 'red' : 'gray'}-400"><div class="flex justify-between mb-2"><div><div class="font-bold">${r.date}</div><div class="text-sm text-gray-500">${r.shift === 'sabah' ? '🌅' : '🌙'} ${r.user_name}</div></div><div class="flex items-center gap-2">${r.verification_status === 'verified' ? '<span class="text-green-500">✅</span>' : r.verification_status === 'mismatch' ? '<span class="text-red-500">❌</span>' : ''}${S.user.isAdmin ? `<button onclick="deleteP(${r.id})" class="text-red-400">🗑️</button>` : ''}</div></div><div class="grid grid-cols-3 gap-2"><div class="bg-blue-50 rounded-xl p-2 text-center"><div class="text-xs text-blue-600">↔️</div><div class="font-bold text-blue-700">${r.sokrasina_shpon || 0}</div></div><div class="bg-green-50 rounded-xl p-2 text-center"><div class="text-xs text-green-600">↕️</div><div class="font-bold text-green-700">${r.suyuna_shpon || 0}</div></div><div class="bg-indigo-50 rounded-xl p-2 text-center"><div class="text-xs text-indigo-600">m³</div><div class="font-bold text-indigo-700">${r.gt}</div></div></div></div>`).join('')}`;
 }
 
 // EVENT HANDLERS
-window.doLogin = function() {
-    const u = document.getElementById('username').value;
-    const p = document.getElementById('password').value;
-    const user = USERS[u];
-    const err = document.getElementById('loginError');
-    if (!user || user.password !== p) {
-        err.textContent = 'Неверные данные!';
-        err.classList.add('show');
-        return;
+window.doLogin = function() { const u = document.getElementById('username').value, p = document.getElementById('password').value, rem = document.getElementById('rememberMe')?.checked, user = USERS[u], err = document.getElementById('loginError'); if (!user || user.password !== p) { err.textContent = 'Неверные данные!'; err.classList.add('show'); return; } if (rem) { localStorage.setItem('savedUser', JSON.stringify({ username: u, password: p })); } else { localStorage.removeItem('savedUser'); } S.user = user; S.logged = true; render(); };
+window.doLogout = function() { S.logged = false; S.user = null; S.proses = null; S.tab = 'entry'; S.parsedExcel = null; localStorage.removeItem('savedUser'); render(); };
+
+// Sayfa açılışında kayıtlı kullanıcıyı kontrol et
+function checkSavedUser() {
+    const saved = localStorage.getItem('savedUser');
+    if (saved) {
+        try {
+            const { username, password } = JSON.parse(saved);
+            const user = USERS[username];
+            if (user && user.password === password) {
+                S.user = user;
+                S.logged = true;
+            }
+        } catch (e) {}
     }
-    S.user = user;
-    S.logged = true;
-    render();
-};
-
-window.doLogout = function() {
-    S.logged = false;
-    S.user = null;
-    S.proses = null;
-    S.tab = 'entry';
-    render();
-};
-
-window.selectProses = async function(id) {
-    S.proses = id;
-    S.tab = 'entry';
-    render();
-    await loadReports();
-};
-
-window.goBack = function() { S.proses = null; render(); };
+}
+checkSavedUser();
+window.selectProses = async function(id) { S.proses = id; S.tab = 'entry'; S.agacFilters = { tedarikci: '', boy: '', cap: '' }; S.fStart = ''; S.fEnd = ''; render(); await loadReports(); };
+window.goBack = function() { S.proses = null; S.parsedExcel = null; render(); };
 window.setTab = function(t) { S.tab = t; render(); };
 window.setShift = function(s) { S.shift = s; render(); };
 window.setDate = function(d) { S.date = d; render(); };
-window.applyFilter = function() { S.filtering = true; render(); };
-window.clearFilter = function() { S.fStart = ''; S.fEnd = ''; S.filtering = false; render(); };
+
+// AGAC HANDLERS - ANLİK FİLTRELER
+window.setDateFilter = function(field, value) { S[field] = value; render(); };
+window.setAgacFilter = function(type, value) { S.agacFilters[type] = value; render(); };
+window.clearAgacFilters = function() { S.agacFilters = { tedarikci: '', boy: '', cap: '' }; S.fStart = ''; S.fEnd = ''; render(); };
+window.showAgacDetail = function(id) { S.agacDetail = S.agacReports.find(r => r.id === id); render(); };
+window.closeAgacDetail = function() { S.agacDetail = null; render(); };
+window.handleExcelUpload = async function(input) { const file = input.files[0]; if (!file) return; try { S.saving = true; render(); S.parsedExcel = await parseExcelFile(file); S.saving = false; render(); if (!S.parsedExcel.length) { alert('❌ Нет данных'); S.parsedExcel = null; } } catch (e) { alert('❌ Ошибка: ' + e.message); S.saving = false; S.parsedExcel = null; render(); } input.value = ''; };
+window.cancelParsed = function() { S.parsedExcel = null; render(); };
+window.saveAgacReports = async function() { if (!S.parsedExcel?.length) return; S.saving = true; render(); let n = 0; for (const item of S.parsedExcel) { const r = { ...item, user_name: S.user.name }; delete r.sheet_name; if (navigator.onLine) { const { error } = await db.from('agac_kabul_reports').insert([r]); if (!error) n++; else savePending({ type: 'agac', data: r }); } else { savePending({ type: 'agac', data: r }); n++; } } S.parsedExcel = null; S.saving = false; S.tab = 'reports'; await loadReports(); showToast(`✅ ${n} сохранено`); };
+window.deleteAgac = async function(id) { if (confirm('Удалить?')) { await db.from('agac_kabul_reports').delete().eq('id', id); loadReports(); } };
+window.exportAgac = function() { const list = filterAgacReports(); let csv = '\uFEFF' + 'Дата,Поставщик,Номер,Кол-во,Объём\n'; list.forEach(r => csv += `${r.date},${r.tedarikci||''},${r.plaka||''},${r.toplam_adet},${r.toplam_hacim}\n`); downloadCSV(csv, 'agac'); };
 
 // KURUTMA HANDLERS
-window.updateK = function(id, f, v) {
-    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, [f]: v} : m);
-    render();
-};
-
-window.handleKPhoto = function(id, input) {
-    const file = input.files[0];
-    if (!file) return;
-    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m);
-    render();
-};
-
-window.clearKPhoto = function(id) {
-    S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m);
-    render();
-};
-
-window.saveKurutma = async function() {
-    S.saving = true;
-    render();
-    
+window.updateK = function(id, f, v) { S.kurutma = S.kurutma.map(m => m.id === id ? {...m, [f]: v} : m); render(); };
+window.handleKPhoto = function(id, input) { const file = input.files[0]; if (!file) return; S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m); render(); };
+window.clearKPhoto = function(id) { S.kurutma = S.kurutma.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m); render(); };
+window.saveKurutma = async function() { 
+    S.saving = true; render(); 
     const photos = {}, aiResults = {}, verifications = [];
-    
     for (const m of S.kurutma) {
         if (m.photo) {
             const url = await uploadPhoto(m.photo);
             if (url) {
                 photos[m.id] = url;
-                const ai = await analyzePhoto(url, 'kurutma');
+                const ai = await analyzePhoto(url);
                 aiResults[m.id] = ai;
                 m.aiResult = ai;
                 const entered = parseInt(m.qp) || parseInt(m.qd) || 0;
@@ -662,85 +342,35 @@ window.saveKurutma = async function() {
             }
         }
     }
-    
-    const hasAny = verifications.length > 0;
-    const hasMismatch = verifications.some(v => v.status === 'mismatch');
+    const hasAny = verifications.length > 0, hasMismatch = verifications.some(v => v.status === 'mismatch');
     const status = !hasAny ? 'unknown' : hasMismatch ? 'mismatch' : 'verified';
-    
-    const report = {
-        date: S.date + ' ' + new Date().toTimeString().slice(0, 5),
-        shift: S.shift,
-        user_name: S.user.name,
-        machines: S.kurutma.map(m => ({ id: m.id, en: m.en, boy: m.boy, kalinlik: m.kalinlik, qp: m.qp, qd: m.qd })),
-        tvp: totalVol('p'), tvd: totalVol('d'),
-        tqp: totalQty('p'), tqd: totalQty('d'),
-        gt: grandTotal(),
-        photos, ai_results: aiResults,
-        verification_status: status,
-        verifications
-    };
-    
-    if (navigator.onLine) {
-        const { error } = await db.from('reports').insert([report]);
-        if (!error) { showSync(); await loadReports(); }
-        else { savePending({ type: 'kurutma', data: report }); }
-    } else {
-        savePending({ type: 'kurutma', data: report });
-    }
-    
-    S.kurutma = createKurutma();
-    S.saving = false;
-    render();
-    showToast();
+    const report = { 
+        date: S.date + ' ' + new Date().toTimeString().slice(0, 5), 
+        shift: S.shift, 
+        user_name: S.user.name, 
+        machines: S.kurutma.map(m => ({ id: m.id, en: m.en, boy: m.boy, kalinlik: m.kalinlik, qp: m.qp, qd: m.qd })), 
+        tvp: totalVol('p'), tvd: totalVol('d'), tqp: totalQty('p'), tqd: totalQty('d'), gt: grandTotal(),
+        photos, ai_results: aiResults, verification_status: status, verifications
+    }; 
+    if (navigator.onLine) { const { error } = await db.from('reports').insert([report]); if (!error) await loadReports(); else savePending({ type: 'kurutma', data: report }); } else savePending({ type: 'kurutma', data: report }); 
+    S.kurutma = createKurutma(); S.saving = false; render(); showToast(); 
 };
-
-window.deleteK = async function(id) {
-    if (confirm('Удалить?')) {
-        await db.from('reports').delete().eq('id', id);
-        loadReports();
-    }
-};
-
-window.exportK = function() {
-    let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп,Прод,Объём\n';
-    const list = S.filtering ? S.reports.filter(r => {
-        const d = r.date?.split(' ')[0];
-        return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd);
-    }) : S.reports;
-    list.forEach(r => { csv += `${r.date},${r.shift},${r.user_name},${r.tqp},${r.tqd},${r.gt}\n`; });
-    downloadCSV(csv, 'kurutma');
-};
+window.deleteK = async function(id) { if (confirm('Удалить?')) { await db.from('reports').delete().eq('id', id); loadReports(); } };
+window.exportK = function() { let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп,Прод,Объём\n'; S.reports.forEach(r => csv += `${r.date},${r.shift},${r.user_name},${r.tqp},${r.tqd},${r.gt}\n`); downloadCSV(csv, 'kurutma'); };
 
 // PAPEL HANDLERS
-window.updateP = function(id, f, v) {
-    S.papel = S.papel.map(m => m.id === id ? {...m, [f]: v} : m);
-    render();
-};
-
-window.handlePPhoto = function(id, input) {
-    const file = input.files[0];
-    if (!file) return;
-    S.papel = S.papel.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m);
-    render();
-};
-
-window.clearPPhoto = function(id) {
-    S.papel = S.papel.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m);
-    render();
-};
-
-window.savePapel = async function() {
-    S.saving = true;
-    render();
-    
+window.updateP = function(id, f, v) { S.papel = S.papel.map(m => m.id === id ? {...m, [f]: v} : m); render(); };
+window.handlePPhoto = function(id, input) { const file = input.files[0]; if (!file) return; S.papel = S.papel.map(m => m.id === id ? {...m, photo: file, preview: URL.createObjectURL(file)} : m); render(); };
+window.clearPPhoto = function(id) { S.papel = S.papel.map(m => m.id === id ? {...m, photo: null, preview: null, aiResult: null} : m); render(); };
+window.savePapel = async function() { 
+    S.saving = true; render(); 
     const photos = {}, aiResults = {}, verifications = [];
-    
     for (const m of S.papel) {
         if (m.photo) {
             const url = await uploadPhoto(m.photo);
             if (url) {
                 photos[m.id] = url;
-                const ai = await analyzePhoto(url, 'papel');
+                const ai = await analyzePhoto(url);
                 aiResults[m.id] = ai;
                 m.aiResult = ai;
                 const entered = parseInt(m.shpon) || 0;
@@ -748,66 +378,27 @@ window.savePapel = async function() {
             }
         }
     }
-    
-    const hasAny = verifications.length > 0;
-    const hasMismatch = verifications.some(v => v.status === 'mismatch');
+    const hasAny = verifications.length > 0, hasMismatch = verifications.some(v => v.status === 'mismatch');
     const status = !hasAny ? 'unknown' : hasMismatch ? 'mismatch' : 'verified';
-    
-    const report = {
-        date: S.date + ' ' + new Date().toTimeString().slice(0, 5),
-        shift: S.shift,
+    const report = { 
+        date: S.date + ' ' + new Date().toTimeString().slice(0, 5), 
+        shift: S.shift, 
         user_name: S.user.name,
         machines: S.papel.map(m => ({ id: m.id, type: m.type, en: m.en, boy: m.boy, kalinlik: m.kalinlik, shpon: m.shpon })),
-        sokrasina_shpon: parseInt(S.papel[0].shpon) || 0,
-        suyuna_shpon: parseInt(S.papel[1].shpon) || 0,
-        total_shpon: totalShpon(),
+        sokrasina_shpon: parseInt(S.papel[0].shpon) || 0, 
+        suyuna_shpon: parseInt(S.papel[1].shpon) || 0, 
+        total_shpon: totalShpon(), 
         gt: grandPapelTotal(),
-        photos, ai_results: aiResults,
-        verification_status: status,
-        verifications
-    };
-    
-    if (navigator.onLine) {
-        const { error } = await db.from('papel_ekleme_reports').insert([report]);
-        if (!error) { showSync(); await loadReports(); }
-        else { savePending({ type: 'papel', data: report }); }
-    } else {
-        savePending({ type: 'papel', data: report });
-    }
-    
-    S.papel = createPapel();
-    S.saving = false;
-    render();
-    showToast();
+        photos, ai_results: aiResults, verification_status: status, verifications
+    }; 
+    if (navigator.onLine) { const { error } = await db.from('papel_ekleme_reports').insert([report]); if (!error) await loadReports(); else savePending({ type: 'papel', data: report }); } else savePending({ type: 'papel', data: report }); 
+    S.papel = createPapel(); S.saving = false; render(); showToast(); 
 };
+window.deleteP = async function(id) { if (confirm('Удалить?')) { await db.from('papel_ekleme_reports').delete().eq('id', id); loadReports(); } };
+window.exportP = function() { let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп,Прод,Всего,Объём\n'; S.papelReports.forEach(r => csv += `${r.date},${r.shift},${r.user_name},${r.sokrasina_shpon||0},${r.suyuna_shpon||0},${r.total_shpon||0},${r.gt}\n`); downloadCSV(csv, 'papel'); };
 
-window.deleteP = async function(id) {
-    if (confirm('Удалить?')) {
-        await db.from('papel_ekleme_reports').delete().eq('id', id);
-        loadReports();
-    }
-};
+function downloadCSV(csv, name) { const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name + '_' + new Date().toISOString().split('T')[0] + '.csv'; a.click(); }
 
-window.exportP = function() {
-    let csv = '\uFEFF' + 'Дата,Смена,Оператор,Поп_шпон,Прод_шпон,Всего,Объём\n';
-    const list = S.filtering ? S.papelReports.filter(r => {
-        const d = r.date?.split(' ')[0];
-        return (!S.fStart || d >= S.fStart) && (!S.fEnd || d <= S.fEnd);
-    }) : S.papelReports;
-    list.forEach(r => { csv += `${r.date},${r.shift},${r.user_name},${r.sokrasina_shpon||0},${r.suyuna_shpon||0},${r.total_shpon||0},${r.gt}\n`; });
-    downloadCSV(csv, 'papel');
-};
-
-// UTILS
-function downloadCSV(csv, name) {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = name + '_' + new Date().toISOString().split('T')[0] + '.csv';
-    link.click();
-}
-
-// START APP
 render();
 </script>
 </body>
