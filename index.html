@@ -91,7 +91,7 @@ let S = {
     reports: [], papelReports: [], agacReports: [],
     fStart: '', fEnd: '', filtering: false, loading: false, saving: false,
     agacFilters: { tedarikci: '', boy: '', cap: '' },
-    agacDetail: null, parsedExcel: null, analyzingExcel: false
+    agacDetail: null, parsedExcel: null, analyzingExcel: false, photoPreview: null
 };
 
 function updateOnline() { const b = document.getElementById('offlineBadge'); if (b) navigator.onLine ? b.classList.remove('show') : b.classList.add('show'); }
@@ -153,142 +153,144 @@ function parseExcelFile(file) {
                     
                     if (json.length < 10) return;
                     
-                    // Format tespiti - B sütununda "Северный" var mı?
-                    const colBHasSeverny = json[1]?.[1]?.toString()?.includes('Северный') || json[2]?.[1]?.toString()?.includes('Северный');
-                    const colAHasSeverny = json[0]?.[0]?.toString()?.includes('Северный') || json[1]?.[0]?.toString()?.includes('Северный');
+                    console.log('Sheet:', sheetName, 'Rows:', json.length);
                     
-                    let tedarikci, tarih, plaka, urunTipi, dataStartRow;
-                    let offset = colBHasSeverny ? 1 : 0; // B'den başlıyorsa offset=1
-                    
-                    // Tedarikçi bul (Северный olmayan ilk değer)
-                    for (let i = 1; i < 6; i++) {
-                        const val = json[i]?.[offset];
-                        if (val && typeof val === 'string' && !val.includes('Северный') && !val.includes('Наименование') && !val.includes('Время') && !val.includes('Гос.') && !val.includes('Партия')) {
+                    // Tedarikçi bul - json[2][1] konumunda olmalı
+                    let tedarikci = '';
+                    for (let i = 1; i <= 4; i++) {
+                        const val = json[i]?.[1];
+                        if (val && typeof val === 'string' && 
+                            !val.includes('Северный') && 
+                            !val.includes('Наименование') && 
+                            !val.includes('Время') && 
+                            !val.includes('Гос') &&
+                            !val.includes('Партия') &&
+                            !val.includes('№')) {
                             tedarikci = val.trim();
+                            console.log('Tedarikçi bulundu:', tedarikci, 'satır:', i);
                             break;
                         }
                     }
                     
-                    if (!tedarikci) return;
-                    
-                    // Tarih ve plaka bul
-                    for (let i = 3; i < 8; i++) {
-                        const label = json[i]?.[offset];
-                        if (label?.toString()?.includes('Время')) {
-                            tarih = json[i]?.[offset + 2];
-                        }
-                        if (label?.toString()?.includes('Гос.') || label?.toString()?.includes('Номер')) {
-                            plaka = json[i]?.[offset + 2]?.toString() || '';
-                        }
+                    if (!tedarikci) {
+                        console.log('Tedarikçi bulunamadı, sheet atlanıyor');
+                        return;
                     }
                     
-                    // Ürün tipi
-                    for (let i = 2; i < 6; i++) {
-                        if (json[i]?.[offset]?.toString()?.includes('Наименование')) {
-                            urunTipi = json[i]?.[offset + 2] || 'Березовый кругляк';
+                    // Tarih bul - json[4][3] konumunda
+                    let tarih = null;
+                    for (let i = 3; i <= 6; i++) {
+                        const label = json[i]?.[1];
+                        if (label && label.toString().includes('Время')) {
+                            tarih = json[i]?.[3];
                             break;
                         }
                     }
                     
-                    // Tarih dönüşümü
                     if (tarih) {
                         if (typeof tarih === 'number') {
                             const d = new Date((tarih - 25569) * 86400 * 1000);
                             tarih = d.toISOString().split('T')[0];
                         } else if (tarih instanceof Date) {
                             tarih = tarih.toISOString().split('T')[0];
+                        } else if (typeof tarih === 'string' && tarih.includes('-')) {
+                            // Zaten doğru format
                         } else {
                             tarih = new Date().toISOString().split('T')[0];
                         }
                     } else {
                         tarih = new Date().toISOString().split('T')[0];
                     }
+                    console.log('Tarih:', tarih);
                     
-                    // Header satırını bul (Диаметр içeren satır)
-                    dataStartRow = -1;
-                    for (let i = 7; i < 15; i++) {
-                        const row = json[i];
-                        if (row && row.some(cell => cell?.toString()?.includes('Диаметр'))) {
-                            dataStartRow = i + 1; // Veri bir sonraki satırda
+                    // Plaka bul - json[5][3] konumunda
+                    let plaka = '';
+                    for (let i = 4; i <= 7; i++) {
+                        const label = json[i]?.[1];
+                        if (label && (label.toString().includes('Гос') || label.toString().includes('Номер'))) {
+                            plaka = json[i]?.[3]?.toString() || '';
                             break;
                         }
                     }
-                    if (dataStartRow < 0) return;
+                    console.log('Plaka:', plaka);
                     
-                    const tomruklar = [];
-                    let toplamAdet = 0, toplamHacim = 0;
-                    
-                    // Sol grup (offset'e göre sütunlar)
-                    const boy1 = json[dataStartRow]?.[offset + 2]; // Длина sütunu
-                    if (boy1 && !isNaN(boy1)) {
-                        const caplar = [];
-                        for (let i = dataStartRow; i < Math.min(65, json.length); i++) {
-                            const cap = json[i]?.[offset + 1];     // Диаметр
-                            const adet = json[i]?.[offset + 3];    // Кол-во
-                            const hacimBirim = json[i]?.[offset + 4]; // Обьем м3/шт
-                            const hacimToplam = json[i]?.[offset + 5]; // Обьем общий
-                            
-                            if (cap && typeof cap === 'number' && cap >= 10 && cap <= 100 && adet && adet > 0) {
-                                caplar.push({
-                                    cap: parseInt(cap),
-                                    adet: parseInt(adet),
-                                    hacim_birim: parseFloat(hacimBirim) || 0,
-                                    hacim_toplam: parseFloat(hacimToplam) || parseFloat((adet * (hacimBirim || 0)).toFixed(3)) || 0
-                                });
-                                toplamAdet += parseInt(adet);
-                                toplamHacim += parseFloat(hacimToplam) || (adet * (hacimBirim || 0)) || 0;
-                            }
-                        }
-                        if (caplar.length > 0) {
-                            tomruklar.push({
-                                boy: parseInt(boy1),
-                                caplar,
-                                boy_toplam_adet: caplar.reduce((s, c) => s + c.adet, 0),
-                                boy_toplam_hacim: parseFloat(caplar.reduce((s, c) => s + c.hacim_toplam, 0).toFixed(3))
-                            });
-                        }
-                    }
-                    
-                    // Sağ grup varsa (offset + 7'den başlar)
-                    const rightOffset = offset + 7;
-                    if (json[dataStartRow]?.length > rightOffset + 3) {
-                        const boy2 = json[dataStartRow]?.[rightOffset + 2];
-                        if (boy2 && !isNaN(boy2)) {
-                            const caplar = [];
-                            for (let i = dataStartRow; i < Math.min(65, json.length); i++) {
-                                const cap = json[i]?.[rightOffset + 1];
-                                const adet = json[i]?.[rightOffset + 3];
-                                const hacimBirim = json[i]?.[rightOffset + 4];
-                                const hacimToplam = json[i]?.[rightOffset + 5];
-                                
-                                if (cap && typeof cap === 'number' && cap >= 10 && cap <= 100 && adet && adet > 0) {
-                                    caplar.push({
-                                        cap: parseInt(cap),
-                                        adet: parseInt(adet),
-                                        hacim_birim: parseFloat(hacimBirim) || 0,
-                                        hacim_toplam: parseFloat(hacimToplam) || parseFloat((adet * (hacimBirim || 0)).toFixed(3)) || 0
-                                    });
-                                    toplamAdet += parseInt(adet);
-                                    toplamHacim += parseFloat(hacimToplam) || (adet * (hacimBirim || 0)) || 0;
+                    // Header satırını bul - "Диаметр" içeren satır
+                    let headerRow = -1;
+                    for (let i = 5; i < 15; i++) {
+                        const row = json[i];
+                        if (row) {
+                            for (let j = 0; j < row.length; j++) {
+                                if (row[j] && row[j].toString().includes('Диаметр')) {
+                                    headerRow = i;
+                                    console.log('Header satırı:', headerRow);
+                                    break;
                                 }
                             }
-                            if (caplar.length > 0) {
-                                tomruklar.push({
-                                    boy: parseInt(boy2),
-                                    caplar,
-                                    boy_toplam_adet: caplar.reduce((s, c) => s + c.adet, 0),
-                                    boy_toplam_hacim: parseFloat(caplar.reduce((s, c) => s + c.hacim_toplam, 0).toFixed(3))
-                                });
-                            }
+                        }
+                        if (headerRow >= 0) break;
+                    }
+                    
+                    if (headerRow < 0) {
+                        console.log('Header bulunamadı');
+                        return;
+                    }
+                    
+                    const dataStartRow = headerRow + 1;
+                    
+                    // Boy değerini bul (ilk veri satırından)
+                    const boy = json[dataStartRow]?.[3];
+                    console.log('Boy:', boy);
+                    
+                    if (!boy || isNaN(boy)) {
+                        console.log('Boy bulunamadı');
+                        return;
+                    }
+                    
+                    // Verileri topla
+                    const tomruklar = [];
+                    const caplar = [];
+                    let toplamAdet = 0;
+                    let toplamHacim = 0;
+                    
+                    for (let i = dataStartRow; i < Math.min(json.length, dataStartRow + 50); i++) {
+                        const row = json[i];
+                        if (!row) continue;
+                        
+                        const cap = row[2];      // Диаметр - index 2
+                        const adet = row[4];     // Кол-во - index 4
+                        const hacimBirim = row[5]; // Обьем м3/шт - index 5
+                        const hacimToplam = row[6]; // Обьем общий - index 6
+                        
+                        // Geçerli veri satırı mı kontrol et
+                        if (cap && typeof cap === 'number' && cap >= 10 && cap <= 100 && adet && adet > 0) {
+                            const hacim = hacimToplam || (adet * (hacimBirim || 0));
+                            caplar.push({
+                                cap: parseInt(cap),
+                                adet: parseInt(adet),
+                                hacim_birim: parseFloat(hacimBirim) || 0,
+                                hacim_toplam: parseFloat(hacim.toFixed(3))
+                            });
+                            toplamAdet += parseInt(adet);
+                            toplamHacim += hacim;
+                            console.log('Veri:', cap, 'cm,', adet, 'adet,', hacim.toFixed(3), 'm³');
                         }
                     }
                     
-                    if (tomruklar.length > 0) {
+                    console.log('Toplam:', toplamAdet, 'adet,', toplamHacim.toFixed(3), 'm³');
+                    
+                    if (caplar.length > 0) {
+                        tomruklar.push({
+                            boy: parseInt(boy),
+                            caplar,
+                            boy_toplam_adet: toplamAdet,
+                            boy_toplam_hacim: parseFloat(toplamHacim.toFixed(3))
+                        });
+                        
                         results.push({
-                            tedarikci: tedarikci.toString().trim(),
+                            tedarikci,
                             date: tarih,
-                            plaka: plaka?.toString()?.trim() || '',
-                            urun_tipi: urunTipi || 'Березовый кругляк',
+                            plaka,
+                            urun_tipi: 'Березовый кругляк',
                             tomruklar,
                             toplam_adet: toplamAdet,
                             toplam_hacim: parseFloat(toplamHacim.toFixed(3)),
@@ -296,8 +298,13 @@ function parseExcelFile(file) {
                         });
                     }
                 });
+                
+                console.log('Toplam sonuç:', results.length);
                 resolve(results);
-            } catch (err) { reject(err); }
+            } catch (err) { 
+                console.error('Parse hatası:', err);
+                reject(err); 
+            }
         };
         reader.onerror = reject;
         reader.readAsArrayBuffer(file);
@@ -334,16 +341,79 @@ function renderAgac() {
 function renderAgacEntry() {
     if (S.analyzingExcel) {
         return `<div class="bg-white rounded-2xl shadow p-8 text-center">
-            <div class="text-6xl mb-4">📊</div>
+            <div class="text-6xl mb-4">🤖</div>
             <div class="spinner" style="border-top-color:#22C55E;width:48px;height:48px;margin:0 auto 16px"></div>
-            <div class="text-xl font-bold text-green-700 mb-2">Анализ файла...</div>
-            <div class="text-sm text-gray-500">Пожалуйста, подождите 5 секунд</div>
-            <div class="mt-4 bg-green-100 rounded-full h-2 overflow-hidden">
-                <div class="bg-green-500 h-full animate-pulse" style="width:100%"></div>
-            </div>
+            <div class="text-xl font-bold text-green-700 mb-2">AI анализирует фото...</div>
+            <div class="text-sm text-gray-500">Пожалуйста, подождите</div>
         </div>`;
     }
-    return `<div class="upload-zone" onclick="document.getElementById('excelInput').click()"><input type="file" id="excelInput" accept=".xlsx,.xls" onchange="handleExcelUpload(this)" class="hidden"><div class="text-5xl mb-3">📊</div><div class="text-lg font-bold text-green-700 mb-1">Загрузить Excel</div><div class="text-sm text-green-600">калькулятор_кругляк.xlsx</div></div>${S.parsedExcel ? `<div class="mt-4"><div class="bg-green-100 text-green-800 p-3 rounded-xl mb-3 text-center font-semibold">✅ Найдено ${S.parsedExcel.length} записей</div>${S.parsedExcel.map(item => `<div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-green-500"><div class="font-bold text-gray-800">${item.tedarikci}</div><div class="text-sm text-gray-500 mb-2">📅 ${item.date} • 🚛 ${item.plaka || '-'}</div><div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-3 text-white text-center"><span class="font-bold">${item.toplam_adet} шт</span> • <span class="font-bold">${item.toplam_hacim} m³</span></div></div>`).join('')}<div class="flex gap-2"><button onclick="cancelParsed()" class="flex-1 bg-gray-400 text-white py-3 rounded-xl font-bold">❌ Отмена</button><button onclick="saveAgacReports()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold">${S.saving ? '<span class="spinner"></span>' : '💾 Сохранить'}</button></div></div>` : ''}`;
+    return `
+        <div class="bg-white rounded-2xl shadow p-4 mb-4">
+            <div class="text-center mb-4">
+                <div class="text-4xl mb-2">📷</div>
+                <div class="text-lg font-bold text-gray-700">Сфотографируйте таблицу</div>
+                <div class="text-sm text-gray-500">AI автоматически распознает данные</div>
+            </div>
+            <div class="flex gap-2">
+                <label class="flex-1 cursor-pointer">
+                    <div class="bg-green-500 text-white py-4 rounded-xl text-center font-bold flex items-center justify-center gap-2">
+                        📷 Камера
+                    </div>
+                    <input type="file" accept="image/*" capture="environment" onchange="handleAgacPhoto(this)" class="hidden">
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <div class="bg-blue-500 text-white py-4 rounded-xl text-center font-bold flex items-center justify-center gap-2">
+                        🖼️ Галерея
+                    </div>
+                    <input type="file" accept="image/*" onchange="handleAgacPhoto(this)" class="hidden">
+                </label>
+            </div>
+        </div>
+        ${S.photoPreview ? `
+            <div class="bg-white rounded-2xl shadow p-4 mb-4">
+                <img src="${S.photoPreview}" class="w-full rounded-xl mb-3 max-h-48 object-contain">
+                <button onclick="clearAgacPhoto()" class="w-full bg-gray-400 text-white py-2 rounded-xl">🗑️ Удалить фото</button>
+            </div>
+        ` : ''}
+        ${S.parsedExcel ? `
+            <div class="bg-green-100 text-green-800 p-3 rounded-xl mb-3 text-center font-semibold">
+                ✅ AI распознал данные
+            </div>
+            ${S.parsedExcel.map((item, idx) => `
+                <div class="bg-white rounded-2xl shadow p-4 mb-3 border-l-4 border-green-500">
+                    <div class="font-bold text-gray-800 text-lg mb-1">${item.tedarikci || 'Неизвестный'}</div>
+                    <div class="text-sm text-gray-500 mb-3">📅 ${item.date} • 🚛 ${item.plaka || '-'}</div>
+                    ${item.tomruklar?.map(t => `
+                        <div class="bg-gray-50 rounded-xl p-3 mb-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-semibold text-green-700">📏 ${(t.boy/100).toFixed(2)}m</span>
+                                <span class="text-sm text-gray-500">${t.boy_toplam_adet} шт • ${t.boy_toplam_hacim} m³</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 text-xs">
+                                ${t.caplar?.slice(0, 6).map(c => `
+                                    <div class="bg-white rounded px-2 py-1 text-center">
+                                        ${c.cap}см: ${c.adet}шт
+                                    </div>
+                                `).join('')}
+                                ${t.caplar?.length > 6 ? `<div class="text-gray-400">+${t.caplar.length - 6} ещё</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-3 text-white text-center mt-3">
+                        <span class="font-bold text-xl">${item.toplam_adet} шт</span>
+                        <span class="mx-2">•</span>
+                        <span class="font-bold text-xl">${item.toplam_hacim} m³</span>
+                    </div>
+                </div>
+            `).join('')}
+            <div class="flex gap-2">
+                <button onclick="cancelParsed()" class="flex-1 bg-gray-400 text-white py-3 rounded-xl font-bold">❌ Отмена</button>
+                <button onclick="saveAgacReports()" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-bold">
+                    ${S.saving ? '<span class="spinner"></span>' : '💾 Сохранить'}
+                </button>
+            </div>
+        ` : ''}
+    `;
 }
 
 function renderAgacReports() {
@@ -449,6 +519,58 @@ window.setAgacFilter = function(type, value) { S.agacFilters[type] = value; rend
 window.clearAgacFilters = function() { S.agacFilters = { tedarikci: '', boy: '', cap: '' }; S.fStart = ''; S.fEnd = ''; render(); };
 window.showAgacDetail = function(id) { S.agacDetail = S.agacReports.find(r => r.id === id); render(); };
 window.closeAgacDetail = function() { S.agacDetail = null; render(); };
+window.handleAgacPhoto = async function(input) { 
+    const file = input.files[0]; 
+    if (!file) return; 
+    
+    try { 
+        S.analyzingExcel = true;
+        S.photoPreview = URL.createObjectURL(file);
+        render(); 
+        
+        // Fotoğrafı base64'e çevir
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+        
+        // AI'a gönder
+        const response = await fetch('/api/analyze-table', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64 })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            S.parsedExcel = [result.data];
+        } else {
+            alert('❌ AI не смог распознать данные: ' + (result.error || 'Попробуйте ещё раз'));
+            S.photoPreview = null;
+        }
+        
+        S.analyzingExcel = false;
+        render(); 
+    } catch (e) { 
+        console.error('Hata:', e);
+        alert('❌ Ошибка: ' + e.message); 
+        S.analyzingExcel = false;
+        S.photoPreview = null;
+        S.parsedExcel = null; 
+        render(); 
+    } 
+    input.value = ''; 
+};
+
+window.clearAgacPhoto = function() {
+    S.photoPreview = null;
+    S.parsedExcel = null;
+    render();
+};
+
 window.handleExcelUpload = async function(input) { 
     const file = input.files[0]; 
     if (!file) return; 
@@ -477,8 +599,8 @@ window.handleExcelUpload = async function(input) {
     } 
     input.value = ''; 
 };
-window.cancelParsed = function() { S.parsedExcel = null; render(); };
-window.saveAgacReports = async function() { if (!S.parsedExcel?.length) return; S.saving = true; render(); let n = 0; for (const item of S.parsedExcel) { const r = { ...item, user_name: S.user.name }; delete r.sheet_name; if (navigator.onLine) { const { error } = await db.from('agac_kabul_reports').insert([r]); if (!error) n++; else savePending({ type: 'agac', data: r }); } else { savePending({ type: 'agac', data: r }); n++; } } S.parsedExcel = null; S.saving = false; S.tab = 'reports'; await loadReports(); showToast(`✅ ${n} сохранено`); };
+window.cancelParsed = function() { S.parsedExcel = null; S.photoPreview = null; render(); };
+window.saveAgacReports = async function() { if (!S.parsedExcel?.length) return; S.saving = true; render(); let n = 0; for (const item of S.parsedExcel) { const r = { ...item, user_name: S.user.name }; delete r.sheet_name; if (navigator.onLine) { const { error } = await db.from('agac_kabul_reports').insert([r]); if (!error) n++; else savePending({ type: 'agac', data: r }); } else { savePending({ type: 'agac', data: r }); n++; } } S.parsedExcel = null; S.photoPreview = null; S.saving = false; S.tab = 'reports'; await loadReports(); showToast(`✅ ${n} сохранено`); };
 window.deleteAgac = async function(id) { if (confirm('Удалить?')) { await db.from('agac_kabul_reports').delete().eq('id', id); loadReports(); } };
 window.exportAgac = function() { const list = filterAgacReports(); let csv = '\uFEFF' + 'Дата,Поставщик,Номер,Кол-во,Объём\n'; list.forEach(r => csv += `${r.date},${r.tedarikci||''},${r.plaka||''},${r.toplam_adet},${r.toplam_hacim}\n`); downloadCSV(csv, 'agac'); };
 
